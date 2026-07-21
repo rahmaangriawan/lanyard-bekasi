@@ -1,0 +1,71 @@
+/* Scroll Reveal — Mode A Vanilla Light (Linear/Stripe/Vercel editorial) — < 2kb gz */
+[data-sr]{
+  --sr-y: 18px;
+  --sr-scale: 0.985;
+  --sr-delay: 0ms;
+  opacity:0;
+  transform: translateY(var(--sr-y)) scale(var(--sr-scale));
+  transition: opacity 560ms cubic-bezier(0.16,1,0.3,1), transform 560ms cubic-bezier(0.16,1,0.3,1);
+  transition-delay: var(--sr-delay);
+  will-change: opacity, transform;
+}
+[data-sr].is-in{
+  opacity:1;
+  transform: translateY(0) scale(1);
+}
+[data-sr].is-out{
+  opacity:0;
+  transform: translateY(-8px) scale(0.99);
+}
+[data-sr="title"]{ --sr-y: 20px; --sr-scale: 0.99; }
+[data-sr="desc"]{ --sr-y: 14px; --sr-scale: 1; }
+[data-sr="card"]{ --sr-y: 28px; --sr-scale: 0.96; }
+/* Fase 4.2 — trust cards per-card reveal urut 1-1, bukan bareng */
+#trust-cards [data-sr="card"]{ --sr-y: 36px; --sr-scale: 0.94; transition: opacity 640ms cubic-bezier(0.16,1,0.3,1), transform 720ms cubic-bezier(0.16,1,0.3,1); transition-delay: var(--sr-delay); }
+[data-sr="trust-card"]{
+  --sr-y: 40px;
+  --sr-x: 0px;
+  --sr-scale: 0.92;
+  --sr-rotate: -0.6deg;
+  opacity:0;
+  transform: translate3d(var(--sr-x), var(--sr-y), 0) scale(var(--sr-scale)) rotate(var(--sr-rotate));
+  filter: blur(10px);
+  transition: opacity 640ms cubic-bezier(0.16,1,0.3,1), transform 760ms cubic-bezier(0.16,1,0.3,1), filter 600ms cubic-bezier(0.16,1,0.3,1);
+  transition-delay: var(--sr-delay,0ms);
+  will-change: opacity, transform, filter;
+}
+[data-sr="trust-card"].is-in{
+  opacity:1;
+  transform: translate3d(0,0,0) scale(1) rotate(0deg);
+  filter: blur(0px);
+}
+[data-sr="trust-card"].is-out{
+  opacity:0;
+  transform: translate3d(0,-10px,0) scale(0.985) rotate(0.3deg);
+  filter: blur(6px);
+}
+[data-sr="fade"]{ --sr-y: 0px; --sr-scale: 1; }
+[data-sr="stagger"] > *{
+  --sr-y: 26px; --sr-scale: 0.97;
+  opacity:0; transform: translateY(var(--sr-y)) scale(var(--sr-scale));
+  transition: opacity 620ms cubic-bezier(0.16,1,0.3,1), transform 680ms cubic-bezier(0.16,1,0.3,1);
+  transition-delay: calc(var(--sr-delay,0ms) + var(--stagger,0ms));
+  will-change: opacity, transform;
+}
+[data-sr="stagger"].is-in > *{ opacity:1; transform: translateY(0) scale(1); }
+[data-sr="stagger"].is-out > *{ opacity:0; transform: translateY(-10px) scale(0.985); }
+/* trust cards per-card reveal — 1-1 urut */
+
+/* parallax base — transform handled by JS rAF */
+[data-parallax]{
+  will-change: transform;
+  transform: translate3d(0,0,0);
+}
+
+/* product progress — removed Fase 3, garis gerak di Pilihan Produk dihapus */
+.sr-progress{ display:none !important; }
+
+@media(prefers-reduced-motion:reduce){
+  [data-sr], [data-sr="stagger"] > *, [data-parallax]{ transition:none !important; opacity:1 !important; transform:none !important; }
+  .sr-progress{ display:none !important; }
+}

@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /kawruh/
+Disallow: /api/
+Disallow: /login/
+Disallow: /storage/
+Disallow: /*?q=
+
+Sitemap: https://pusattalilanyard.com/sitemap.xml

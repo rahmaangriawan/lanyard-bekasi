@@ -1,0 +1,18 @@
+<?php echo '<?xml version="1.0" encoding="UTF-8"?>'; ?>
+<?php echo '<?xml-stylesheet type="text/xsl" href="/sitemap.xsl"?>'; ?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+@foreach($urls as $u)
+  <url>
+    <loc>{{ $u['loc'] }}</loc>
+    @if(isset($u['lastmod']))
+    <lastmod>{{ $u['lastmod']->toAtomString() }}</lastmod>
+    @endif
+    @if(isset($u['changefreq']))
+    <changefreq>{{ $u['changefreq'] }}</changefreq>
+    @endif
+    @if(isset($u['priority']))
+    <priority>{{ $u['priority'] }}</priority>
+    @endif
+  </url>
+@endforeach
+</urlset>

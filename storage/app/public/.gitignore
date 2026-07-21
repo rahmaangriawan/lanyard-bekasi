@@ -1,0 +1,5 @@
+*
+!uploads/
+!uploads/blog-import/
+!uploads/blog-import/*.webp
+!.gitignore

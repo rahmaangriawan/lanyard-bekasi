@@ -1,0 +1,105 @@
+/* Shared public button motion. Visual styling stays owned by each component. */
+
+.ptl-button-motion {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.ptl-button-motion::before,
+.ptl-button-motion::after {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  width: 72%;
+  height: 180%;
+  pointer-events: none;
+  background: currentColor;
+  opacity: 0.1;
+  transform: skewY(-16deg) translateY(0);
+  transition: transform 280ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.ptl-button-motion::before {
+  top: -184%;
+  left: -22%;
+}
+
+.ptl-button-motion::after {
+  right: -22%;
+  bottom: -184%;
+}
+
+.ptl-button-motion > *:not(.ptl-button-motion__label),
+.ptl-button-motion__label {
+  position: relative;
+  z-index: 1;
+}
+
+.ptl-button-motion:disabled::before,
+.ptl-button-motion:disabled::after {
+  display: none;
+}
+
+.ptl-button-motion__label {
+  display: inline-block;
+  transform: translateY(0);
+  will-change: transform, opacity;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .ptl-button-motion:hover::before,
+  .ptl-button-motion:focus-visible::before {
+    transform: skewY(-16deg) translateY(102%);
+  }
+
+  .ptl-button-motion:hover::after,
+  .ptl-button-motion:focus-visible::after {
+    transform: skewY(-16deg) translateY(-102%);
+  }
+
+  .ptl-button-motion:hover .ptl-button-motion__label,
+  .ptl-button-motion:focus-visible .ptl-button-motion__label {
+    animation: ptl-button-label-roll 320ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .ptl-button-motion:disabled .ptl-button-motion__label {
+    animation: none;
+  }
+}
+
+@keyframes ptl-button-label-roll {
+  0% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  48% {
+    opacity: 0;
+    transform: translateY(80%);
+  }
+
+  49% {
+    opacity: 0;
+    transform: translateY(-80%);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ptl-button-motion::before,
+  .ptl-button-motion::after {
+    display: none;
+    transition: none;
+  }
+
+  .ptl-button-motion .ptl-button-motion__label {
+    animation: none !important;
+    transform: none;
+  }
+}

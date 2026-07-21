@@ -1,0 +1,20 @@
+/* =============================================
+   Geist — Local Font Files
+   Self-hosted for reliability. Front page only.
+   ============================================= */
+
+@font-face {
+  font-family: 'Geist';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/font-assets/geist-400') format('woff2');
+}
+
+@font-face {
+  font-family: 'Geist';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/font-assets/geist-700') format('woff2');
+}

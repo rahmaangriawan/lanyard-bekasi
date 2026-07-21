@@ -1,0 +1,17 @@
+/* Homepage-wide visual rhythm. Loaded independently so changes need no frontend build. */
+
+.homepage-content h2:not(.sr-only) {
+  font-size: clamp(1.75rem, 2.6vw, 2.375rem) !important;
+  line-height: 1.12 !important;
+  letter-spacing: -0.03em !important;
+}
+
+.homepage-content h2:not(.sr-only)::after {
+  display: none !important;
+  content: none !important;
+}
+
+#client-logos-section .client-logos-inner {
+  width: 100%;
+  max-width: 1280px;
+}

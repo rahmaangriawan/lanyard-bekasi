@@ -1,0 +1,182 @@
+/* Homepage national delivery coverage with Jabodetabek as the primary service area. */
+
+.home-locations,
+.home-locations *,
+.home-locations *::before,
+.home-locations *::after {
+  box-sizing: border-box;
+}
+
+.home-locations {
+  --locations-ink: #172033;
+  --locations-muted: #667085;
+  --locations-line: #dde4e9;
+  --locations-green: #117a3a;
+  background: #f6f8f7;
+  padding: clamp(76px, 8vw, 112px) 0;
+  color: var(--locations-ink);
+}
+
+.home-locations__container {
+  width: min(calc(100% - 40px), 1280px);
+  margin-inline: auto;
+}
+
+.home-locations__header {
+  max-width: 700px;
+  margin: 0 auto 38px;
+  text-align: center;
+}
+
+.home-locations__header h2 {
+  margin: 0;
+  color: var(--locations-ink);
+  font-weight: 760;
+  text-wrap: balance;
+}
+
+.home-locations__header p {
+  max-width: 640px;
+  margin: 16px auto 0;
+  color: var(--locations-muted);
+  font-size: clamp(15px, 1.3vw, 17px);
+  line-height: 1.65;
+  text-wrap: balance;
+}
+
+.home-locations__map {
+  overflow: hidden;
+  width: 100%;
+  aspect-ratio: 16 / 7;
+  border: 1px solid var(--locations-line);
+  border-radius: 14px;
+  background: #e9eeeb;
+}
+
+.home-locations__map:focus-within {
+  outline: 3px solid rgb(17 122 58 / 0.22);
+  outline-offset: 4px;
+}
+
+.home-locations__map iframe {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+.home-locations__areas {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 20px;
+}
+
+.home-locations__area {
+  display: flex;
+  min-width: 0;
+  min-height: 92px;
+  align-items: center;
+  gap: 13px;
+  border: 1px solid var(--locations-line);
+  border-radius: 14px;
+  background: #ffffff;
+  padding: 18px;
+}
+
+.home-locations__area > .material-symbols-outlined {
+  display: inline-flex;
+  width: 40px;
+  height: 40px;
+  flex: 0 0 40px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: #eaf5ee;
+  color: var(--locations-green);
+  font-size: 20px;
+}
+
+.home-locations__area h3,
+.home-locations__area p {
+  margin: 0;
+}
+
+.home-locations__area h3 {
+  overflow: hidden;
+  color: var(--locations-ink);
+  font-size: 15px;
+  font-weight: 720;
+  line-height: 1.3;
+  text-overflow: ellipsis;
+}
+
+.home-locations__area p {
+  margin-top: 4px;
+  color: var(--locations-muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+@media (max-width: 1023px) {
+  .home-locations__map {
+    aspect-ratio: 16 / 8.5;
+  }
+
+  .home-locations__areas {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 767px) {
+  .home-locations {
+    padding: 64px 0;
+  }
+
+  .home-locations__header {
+    margin-bottom: 28px;
+    text-align: left;
+  }
+
+  .home-locations__header p {
+    margin-inline: 0;
+  }
+
+  .home-locations__map {
+    aspect-ratio: 4 / 3;
+    border-radius: 12px;
+  }
+
+  .home-locations__areas {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin-top: 14px;
+  }
+
+  .home-locations__area {
+    min-height: 82px;
+    gap: 10px;
+    border-radius: 12px;
+    padding: 13px;
+  }
+
+  .home-locations__area:last-child {
+    grid-column: 1 / -1;
+  }
+
+  .home-locations__area > .material-symbols-outlined {
+    width: 36px;
+    height: 36px;
+    flex-basis: 36px;
+    border-radius: 9px;
+    font-size: 18px;
+  }
+
+  .home-locations__area h3 {
+    font-size: 14px;
+  }
+
+  .home-locations__area p {
+    font-size: 11px;
+  }
+}

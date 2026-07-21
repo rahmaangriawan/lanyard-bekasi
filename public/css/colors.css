@@ -1,0 +1,31 @@
+/* =============================================
+   DESIGN TOKENS — Pusat Tali Lanyard
+   Color palette: Slate
+   Digunakan di SEMUA halaman frontend
+   ============================================= */
+
+:root {
+  /* ── Slate Palette ── */
+  --color-slate-50: #FAFAFA;
+  --color-slate-100: #EFF0F1;
+  --color-slate-200: #DDE0E3;
+  --color-slate-300: #CBD0D7;
+  --color-slate-400: #B8C0CB;
+  --color-slate-500: #A4B0C1;
+  --color-slate-600: #8395AF;
+  --color-slate-700: #576E8F;
+  --color-slate-800: #3D4E67;
+  --color-slate-900: #253141;
+  --color-slate-950: #161D27;
+
+  /* ── Semantic Mappings ── */
+  --background: var(--color-slate-50);
+  --foreground: var(--color-slate-900);
+  --muted: var(--color-slate-100);
+  --muted-foreground: var(--color-slate-600);
+  --card: #ffffff;
+  --border: var(--color-slate-200);
+  --primary: var(--color-slate-800);
+  --primary-foreground: #ffffff;
+  --secondary: var(--color-slate-200);
+}
