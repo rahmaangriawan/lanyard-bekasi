@@ -69,6 +69,8 @@ CREATE TABLE IF NOT EXISTS `post` (
   `published` TINYINT(1) NOT NULL DEFAULT 0,
   `featuredImage` VARCHAR(255) NULL,
   `categoryId` BIGINT UNSIGNED NULL,
+  `tags` TEXT NULL,
+  `authorId` BIGINT UNSIGNED NULL,
   `createdAt` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updatedAt` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `metaTitle` VARCHAR(255) NULL,
@@ -78,7 +80,9 @@ CREATE TABLE IF NOT EXISTS `post` (
   KEY `post_published_createdAt_index` (`published`, `createdAt`),
   KEY `post_categoryId_published_createdAt_index` (`categoryId`, `published`, `createdAt`),
   KEY `post_published_slug_index` (`published`, `slug`),
-  CONSTRAINT `post_categoryId_foreign` FOREIGN KEY (`categoryId`) REFERENCES `category` (`id`) ON DELETE SET NULL
+  KEY `post_authorId_index` (`authorId`),
+  CONSTRAINT `post_categoryId_foreign` FOREIGN KEY (`categoryId`) REFERENCES `category` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `post_authorId_foreign` FOREIGN KEY (`authorId`) REFERENCES `user` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `page` (
