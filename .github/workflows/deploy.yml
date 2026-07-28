@@ -270,7 +270,6 @@ jobs:
             storage/framework/views \
             storage/logs \
             bootstrap/cache
-          chmod 755 "$APP_DIR" "$APP_DIR/public"
 
           test -f public/build/manifest.json
           test -f public/uploads/hero-lanyard-slider-01.webp
