@@ -107,6 +107,8 @@ jobs:
     runs-on: ubuntu-latest
     environment: production
     timeout-minutes: 15
+    env:
+      SSH_CONTROL_PATH: ${{ runner.temp }}/pusattalilanyard-ssh.sock
 
     steps:
       - name: Download deploy artifact
@@ -117,7 +119,7 @@ jobs:
       - name: Install SSH tooling
         run: sudo apt-get update && sudo apt-get install -y sshpass
 
-      - name: Upload package
+      - name: Open reusable SSH connection
         env:
           SSH_HOST: ${{ secrets.SSH_HOST }}
           SSH_PORT: ${{ secrets.SSH_PORT }}
@@ -131,9 +133,53 @@ jobs:
           : "${SSH_USER:?Missing SSH_USER secret}"
           : "${SSH_PASSWORD:?Missing SSH_PASSWORD secret}"
 
-          sshpass -p "$SSH_PASSWORD" scp \
-            -o StrictHostKeyChecking=accept-new \
-            -o ConnectTimeout=15 \
+          rm -f "$SSH_CONTROL_PATH"
+
+          for attempt in 1 2 3 4 5; do
+            echo "Membuka koneksi SSH (percobaan $attempt/5)..."
+
+            if sshpass -p "$SSH_PASSWORD" ssh \
+              -M \
+              -S "$SSH_CONTROL_PATH" \
+              -fN \
+              -o ControlMaster=yes \
+              -o ControlPersist=600 \
+              -o StrictHostKeyChecking=accept-new \
+              -o ConnectTimeout=15 \
+              -o ConnectionAttempts=2 \
+              -o ServerAliveInterval=15 \
+              -o ServerAliveCountMax=4 \
+              -p "$SSH_PORT" \
+              "$SSH_USER@$SSH_HOST"; then
+              echo "Koneksi SSH persisten berhasil dibuka."
+              exit 0
+            fi
+
+            rm -f "$SSH_CONTROL_PATH"
+
+            if [ "$attempt" -lt 5 ]; then
+              delay=$((attempt * 10))
+              echo "::warning::Koneksi SSH gagal; mencoba lagi dalam ${delay} detik."
+              sleep "$delay"
+            fi
+          done
+
+          echo "::error::Server SSH tidak dapat dijangkau setelah 5 percobaan."
+          exit 255
+
+      - name: Upload package
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_PORT: ${{ secrets.SSH_PORT }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          scp \
+            -o ControlMaster=no \
+            -o ControlPath="$SSH_CONTROL_PATH" \
+            -o BatchMode=yes \
             -P "$SSH_PORT" \
             deploy.tar.gz \
             "$SSH_USER@$SSH_HOST:deploy-pusattalilanyard.tar.gz"
@@ -143,14 +189,14 @@ jobs:
           SSH_HOST: ${{ secrets.SSH_HOST }}
           SSH_PORT: ${{ secrets.SSH_PORT }}
           SSH_USER: ${{ secrets.SSH_USER }}
-          SSH_PASSWORD: ${{ secrets.SSH_PASSWORD }}
         shell: bash
         run: |
           set -euo pipefail
 
-          sshpass -p "$SSH_PASSWORD" ssh \
-            -o StrictHostKeyChecking=accept-new \
-            -o ConnectTimeout=15 \
+          ssh \
+            -o ControlMaster=no \
+            -o ControlPath="$SSH_CONTROL_PATH" \
+            -o BatchMode=yes \
             -p "$SSH_PORT" \
             "$SSH_USER@$SSH_HOST" \
             bash -s -- "$DEPLOY_PATH" "$PHP_BIN" <<'REMOTE_SCRIPT'
@@ -271,12 +317,28 @@ jobs:
           SSH_HOST: ${{ secrets.SSH_HOST }}
           SSH_PORT: ${{ secrets.SSH_PORT }}
           SSH_USER: ${{ secrets.SSH_USER }}
-          SSH_PASSWORD: ${{ secrets.SSH_PASSWORD }}
         shell: bash
         run: |
-          sshpass -p "$SSH_PASSWORD" ssh \
-            -o StrictHostKeyChecking=accept-new \
-            -o ConnectTimeout=15 \
+          ssh \
+            -o ControlMaster=no \
+            -o ControlPath="$SSH_CONTROL_PATH" \
+            -o BatchMode=yes \
             -p "$SSH_PORT" \
             "$SSH_USER@$SSH_HOST" \
             "if [ -f '$DEPLOY_PATH/storage/logs/laravel.log' ]; then tail -n 120 '$DEPLOY_PATH/storage/logs/laravel.log'; else echo 'Laravel log is not available.'; fi"
+
+      - name: Close SSH connection
+        if: always()
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_PORT: ${{ secrets.SSH_PORT }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+        shell: bash
+        run: |
+          if [ -S "$SSH_CONTROL_PATH" ]; then
+            ssh \
+              -S "$SSH_CONTROL_PATH" \
+              -O exit \
+              -p "$SSH_PORT" \
+              "$SSH_USER@$SSH_HOST" || true
+          fi
