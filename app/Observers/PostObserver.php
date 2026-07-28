@@ -11,6 +11,7 @@ class PostObserver
     {
         $cache = Cache::store(config('cache.public_store', 'file'));
         $cache->forget('home_posts');
+        $cache->forget('home_response_html');
         $cache->forget('public_sitemap_posts');
         $cache->put('seo_sitemap_dirty', true, now()->addDays(7));
     }

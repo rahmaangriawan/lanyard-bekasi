@@ -3,7 +3,8 @@
     "private": true,
     "type": "module",
     "scripts": {
-        "build": "vue-tsc && vite build",
+        "build": "vue-tsc && vite build && npm run build:public",
+        "build:public": "node scripts/build-public-assets.mjs",
         "dev": "vite"
     },
     "devDependencies": {
@@ -15,7 +16,7 @@
         "axios": "^1.11.0",
         "concurrently": "^9.0.1",
         "laravel-vite-plugin": "^2.0.0",
-        "postcss": "^8.4.31",
+        "postcss": "^8.5.23",
         "tailwindcss": "^3.2.1",
         "typescript": "^5.6.3",
         "vite": "^7.0.7",

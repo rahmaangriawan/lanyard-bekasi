@@ -20,10 +20,12 @@ class Post extends Model
         'published',
         'featuredImage',
         'categoryId',
+        'tags',
         'authorId',
         'metaTitle',
         'metaDescription',
         'createdAt',
+        'updatedAt',
     ];
 
     protected function casts(): array

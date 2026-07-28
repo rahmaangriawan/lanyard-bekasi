@@ -1,44 +1,34 @@
 @php
-  $siteUrlRaw = config('app.url');
-  if (empty($siteUrlRaw)) { $siteUrlRaw = url('/'); }
-  $siteUrl = rtrim($siteUrlRaw, '/');
+  $siteUrl = rtrim((string) config('app.url', url('/')), '/');
+  if (str_contains($siteUrl, 'localhost') || str_contains($siteUrl, '127.0.0.1')) {
+    $siteUrl = 'https://pusattalilanyard.com';
+  }
+  $canonicalUrl = $siteUrl . '/area';
+  $areaNames = ['Jakarta', 'Bogor', 'Depok', 'Tangerang', 'Bekasi'];
 
   $serviceSchema = [
     '@context' => 'https://schema.org',
     '@type' => 'Service',
-    'name' => 'Layanan Cetak Lanyard Custom Indonesia Raya',
-    'serviceType' => 'Cetak Lanyard Custom',
+    '@id' => $canonicalUrl . '/#service',
+    'name' => 'Pengiriman Lanyard Custom ke Seluruh Indonesia',
+    'serviceType' => 'Produksi dan Pengiriman Lanyard Custom',
     'provider' => ['@id' => $siteUrl . '/#organization'],
-    'areaServed' => [
-      ['@type' => 'City', 'name' => 'Indonesia Kota'],
-      ['@type' => 'City', 'name' => 'Indonesia Selatan'],
-      ['@type' => 'AdministrativeArea', 'name' => 'Kabupaten Indonesia'],
-      ['@type' => 'City', 'name' => 'BSD'],
-      ['@type' => 'City', 'name' => 'Bintaro'],
-      ['@type' => 'City', 'name' => 'Ciputat'],
-      ['@type' => 'City', 'name' => 'Pamulang'],
-    ],
-    'description' => 'Kami melayani pengiriman gratis dan Same Day Service untuk seluruh wilayah Indonesia Raya. Dari pusat kota hingga kawasan perumahan pinggiran, pesanan Anda sampai tepat waktu.',
-    'url' => $siteUrl . '/area',
-    'offers' => [
-      '@type' => 'Offer',
-      'name' => 'Bebas Ongkir Indonesia Raya',
-      'description' => 'Gratis ongkir untuk wilayah Kota Indonesia, Indonesia Selatan, dan Kabupaten Indonesia tanpa minimum transaksi.',
-      'priceCurrency' => 'IDR',
-      'price' => '0',
-      'availability' => 'https://schema.org/InStock',
-      'areaServed' => ['@type' => 'City', 'name' => 'Indonesia'],
-    ],
+    'areaServed' => collect($areaNames)->map(fn ($area) => [
+      '@type' => 'City',
+      'name' => $area,
+    ])->all(),
+    'description' => 'Pusat Tali Lanyard melayani produksi dan pengiriman lanyard custom ke seluruh Indonesia dengan cakupan utama Jabodetabek.',
+    'url' => $canonicalUrl,
   ];
 
   $breadcrumb = [
     '@context' => 'https://schema.org',
     '@type' => 'BreadcrumbList',
     'itemListElement' => [
-      ['@type' => 'ListItem', 'position' => 1, 'name' => 'Home', 'item' => $siteUrl . '/'],
-      ['@type' => 'ListItem', 'position' => 2, 'name' => 'Area Jangkauan', 'item' => $siteUrl . '/area'],
+      ['@type' => 'ListItem', 'position' => 1, 'name' => 'Beranda', 'item' => $siteUrl . '/'],
+      ['@type' => 'ListItem', 'position' => 2, 'name' => 'Area Pengiriman', 'item' => $canonicalUrl],
     ],
   ];
 @endphp
-<script type="application/ld+json">{!! json_encode($serviceSchema, JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE) !!}</script>
-<script type="application/ld+json">{!! json_encode($breadcrumb, JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE) !!}</script>
+<script type="application/ld+json">{!! json_encode($serviceSchema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}</script>
+<script type="application/ld+json">{!! json_encode($breadcrumb, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}</script>

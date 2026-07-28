@@ -16,7 +16,7 @@ use App\Models\User;
 use App\Support\OpenGraphImage;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
-use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
+use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
 use Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -36,8 +36,9 @@ $serveLegacyPublicAsset = function (string $directory, string $path) {
 
     foreach ($bases as $base) {
         $file = realpath($base.DIRECTORY_SEPARATOR.$path);
+        $basePrefix = rtrim($base, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR;
 
-        if ($file && str_starts_with($file, $base) && is_file($file)) {
+        if ($file && str_starts_with($file, $basePrefix) && is_file($file)) {
             $imageInfo = @getimagesize($file);
             $mimeType = is_array($imageInfo) && isset($imageInfo['mime'])
                 ? (string) $imageInfo['mime']
@@ -62,8 +63,9 @@ $serveStorageAsset = function (string $path) {
 
     foreach ($bases as $base) {
         $file = realpath($base.DIRECTORY_SEPARATOR.$path);
+        $basePrefix = rtrim($base, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR;
 
-        if ($file && str_starts_with($file, $base) && is_file($file)) {
+        if ($file && str_starts_with($file, $basePrefix) && is_file($file)) {
             return response()->file($file, [
                 'Cache-Control' => 'public, max-age=31536000, immutable',
             ]);
@@ -78,15 +80,24 @@ $statelessPublicMiddleware = [
     AddQueuedCookiesToResponse::class,
     StartSession::class,
     ShareErrorsFromSession::class,
-    ValidateCsrfToken::class,
+    PreventRequestForgery::class,
     HandleInertiaRequests::class,
     AddLinkHeadersForPreloadedAssets::class,
 ];
 
 Route::get('/', function () {
-    return response()
-        ->view('pages.home')
-        ->header('Cache-Control', 'public, no-cache, must-revalidate');
+    $html = Cache::store(config('cache.public_store', 'file'))
+        ->remember('home_response_html', now()->addMinutes(5), fn () => view('pages.home')->render());
+    $response = response($html);
+
+    $response->setEtag(sha1($html));
+    $response->setPublic();
+    $response->setMaxAge(60);
+    $response->setSharedMaxAge(300);
+    $response->headers->addCacheControlDirective('stale-while-revalidate', 600);
+    $response->isNotModified(request());
+
+    return $response;
 })->withoutMiddleware($statelessPublicMiddleware)->name('home');
 
 Route::get('/font-assets/{font}', function (string $font) {
@@ -353,11 +364,12 @@ Route::get('/blog/{slug}', function (string $slug) {
         ->orderByDesc('createdAt')
         ->get();
     $relatedPosts = Post::query()
+        ->with('category')
         ->where('published', true)
         ->whereKeyNot($post->id)
         ->when($post->categoryId, fn ($query) => $query->where('categoryId', $post->categoryId))
         ->orderByDesc('createdAt')
-        ->limit(4)
+        ->limit(3)
         ->get();
 
     return view('pages.blog.show', compact('post', 'comments', 'relatedPosts'));

@@ -14,44 +14,12 @@
 
 @push('head')
 @php
-    $heroCssPath = public_path('css/hero.css');
-    $heroCssVersion = file_exists($heroCssPath) ? filemtime($heroCssPath) : 1;
-    $homePricingCssPath = public_path('css/home-pricing.css');
-    $homePricingCssVersion = file_exists($homePricingCssPath) ? filemtime($homePricingCssPath) : 1;
-    $homepageCssPath = public_path('css/homepage.css');
-    $homepageCssVersion = file_exists($homepageCssPath) ? filemtime($homepageCssPath) : 1;
-    $homeAboutCssPath = public_path('css/home-about.css');
-    $homeAboutCssVersion = file_exists($homeAboutCssPath) ? filemtime($homeAboutCssPath) : 1;
-    $homeBenefitsCssPath = public_path('css/home-benefits.css');
-    $homeBenefitsCssVersion = file_exists($homeBenefitsCssPath) ? filemtime($homeBenefitsCssPath) : 1;
-    $homeGalleryCssPath = public_path('css/home-gallery.css');
-    $homeGalleryCssVersion = file_exists($homeGalleryCssPath) ? filemtime($homeGalleryCssPath) : 1;
-    $homeGalleryJsPath = public_path('js/home-gallery.js');
-    $homeGalleryJsVersion = file_exists($homeGalleryJsPath) ? filemtime($homeGalleryJsPath) : 1;
-    $homeTestimonialsCssPath = public_path('css/home-testimonials.css');
-    $homeTestimonialsCssVersion = file_exists($homeTestimonialsCssPath) ? filemtime($homeTestimonialsCssPath) : 1;
-    $homeTestimonialsJsPath = public_path('js/home-testimonials.js');
-    $homeTestimonialsJsVersion = file_exists($homeTestimonialsJsPath) ? filemtime($homeTestimonialsJsPath) : 1;
-    $homeFaqCssPath = public_path('css/home-faq.css');
-    $homeFaqCssVersion = file_exists($homeFaqCssPath) ? filemtime($homeFaqCssPath) : 1;
-    $homeCtaCssPath = public_path('css/home-cta.css');
-    $homeCtaCssVersion = file_exists($homeCtaCssPath) ? filemtime($homeCtaCssPath) : 1;
-    $homeProductsCssPath = public_path('css/home-products.css');
-    $homeProductsCssVersion = file_exists($homeProductsCssPath) ? filemtime($homeProductsCssPath) : 1;
-    $homeLocationsCssPath = public_path('css/home-locations.css');
-    $homeLocationsCssVersion = file_exists($homeLocationsCssPath) ? filemtime($homeLocationsCssPath) : 1;
+    $homeCssPath = public_path('build/public/home.min.css');
+    $homeCssVersion = file_exists($homeCssPath) ? filemtime($homeCssPath) : 1;
+    $homeJsPath = public_path('build/public/home.min.js');
+    $homeJsVersion = file_exists($homeJsPath) ? filemtime($homeJsPath) : 1;
 @endphp
-<link rel="stylesheet" href="/css/hero.css?v={{ $heroCssVersion }}">
-<link rel="stylesheet" href="/css/home-pricing.css?v={{ $homePricingCssVersion }}">
-<link rel="stylesheet" href="/css/homepage.css?v={{ $homepageCssVersion }}">
-<link rel="stylesheet" href="/css/home-about.css?v={{ $homeAboutCssVersion }}">
-<link rel="stylesheet" href="/css/home-benefits.css?v={{ $homeBenefitsCssVersion }}">
-<link rel="stylesheet" href="/css/home-gallery.css?v={{ $homeGalleryCssVersion }}">
-<link rel="stylesheet" href="/css/home-testimonials.css?v={{ $homeTestimonialsCssVersion }}">
-<link rel="stylesheet" href="/css/home-faq.css?v={{ $homeFaqCssVersion }}">
-<link rel="stylesheet" href="/css/home-cta.css?v={{ $homeCtaCssVersion }}">
-<link rel="stylesheet" href="/css/home-products.css?v={{ $homeProductsCssVersion }}">
-<link rel="stylesheet" href="/css/home-locations.css?v={{ $homeLocationsCssVersion }}">
+<link rel="stylesheet" href="/build/public/home.min.css?v={{ $homeCssVersion }}">
 @endpush
 
 @push('schema')
@@ -77,6 +45,5 @@
 @endsection
 
 @section('scripts')
-  <script src="/js/home-gallery.js?v={{ $homeGalleryJsVersion }}" defer></script>
-  <script src="/js/home-testimonials.js?v={{ $homeTestimonialsJsVersion }}" defer></script>
+  <script src="/build/public/home.min.js?v={{ $homeJsVersion }}" defer></script>
 @endsection

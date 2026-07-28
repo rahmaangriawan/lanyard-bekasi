@@ -11,6 +11,7 @@ class SettingObserver
     {
         $publicCache = Cache::store(config('cache.public_store', 'file'));
         $publicCache->forget('home_seo_settings');
+        $publicCache->forget('home_response_html');
         Cache::forget('seo_auto_links_runtime');
     }
 

@@ -11,10 +11,10 @@
   }
 
   // Author details derived from $author or fallback
-  $authorName = isset($displayName) ? $displayName : 'Rama Angriawan';
-  $authorSlugName = isset($authorSlug) ? $authorSlug : \Illuminate\Support\Str::slug($authorName);
+  $authorName = isset($displayName) ? $displayName : ($author->name ?? 'Tim Pusat Tali Lanyard');
+  $authorSlugName = isset($authorSlug) ? $authorSlug : ($author->slug ?? \Illuminate\Support\Str::slug($authorName));
   $canonicalUrl = $siteUrl . '/blog/penulis/' . $authorSlugName;
-  $bioDesc = isset($bioText) ? $bioText : 'Penulis & spesialis lanyard custom di Indonesia. Berbagi tips desain, branding, event, dan panduan produksi lanyard berkualitas.';
+  $bioDesc = isset($bioText) ? $bioText : ($author->bio ?? null);
   
   $authorAvatar = '';
   if (isset($author) && isset($author->avatar) && !empty($author->avatar)) {
@@ -27,8 +27,6 @@
     } else {
       $authorAvatar = preg_replace('/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?/', $siteUrl, $authorAvatarRaw);
     }
-  } else {
-    $authorAvatar = $siteUrl . '/uploads/pusat-tali-lanyard-logo.webp';
   }
 
   // Schema generation
@@ -40,19 +38,13 @@
       '@id' => $canonicalUrl . '#person',
       'name' => $authorName,
       'url' => $canonicalUrl,
-      'image' => $authorAvatar,
-      'description' => $bioDesc,
       'worksFor' => [
         '@id' => $siteUrl . '/#organization'
       ],
-      'sameAs' => [
-        'https://id.linkedin.com/in/rama-angriawan-2460a0334',
-        'https://www.facebook.com/razorcallahan424/',
-        'https://www.instagram.com/rama_angr/',
-        'https://github.com/rama-angriawan/'
-      ]
     ]
   ];
+  if (!empty($authorAvatar)) $personSchema['mainEntity']['image'] = $authorAvatar;
+  if (!empty($bioDesc)) $personSchema['mainEntity']['description'] = $bioDesc;
 
   $breadcrumbSchema = [
     '@context' => 'https://schema.org',

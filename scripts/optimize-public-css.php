@@ -19,6 +19,12 @@ $css = preg_replace(
     $css,
 );
 
+$css = preg_replace(
+    '/(@font-face\s*\{(?=[^{}]*font-family:\s*Material Symbols Outlined)[^{}]*font-display:)\s*block\b/i',
+    '$1swap',
+    $css,
+);
+
 if (file_put_contents($path, $css) === false) {
     throw new RuntimeException("Cannot write {$path}");
 }

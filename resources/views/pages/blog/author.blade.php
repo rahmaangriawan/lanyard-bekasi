@@ -1,9 +1,19 @@
 @extends('layouts.public')
 
 @php
-  $isAdminFallback = (stripos($author->name ?? '', 'Admin') !== false || strtolower(trim($author->name ?? '')) === 'admin tes');
-  $displayName = $isAdminFallback ? 'Rama Angriawan' : ($author->name ?: 'Rama Angriawan');
+  use App\Support\AssetUrl;
+  use App\Support\ResponsiveImage;
+  use Illuminate\Support\Str;
+
+  $displayName = $author->name ?: 'Tim Pusat Tali Lanyard';
+  $bioText = $author->bio;
+  $avatar = AssetUrl::relative($author->avatar);
+  $avatarSrcset = ResponsiveImage::srcset($avatar);
+  $articleCount = $posts->total();
+  $authorCssPath = public_path('css/blog-author.css');
+  $authorCssVersion = file_exists($authorCssPath) ? filemtime($authorCssPath) : 1;
 @endphp
+
 @section('title', $displayName . ' - Penulis Pusat Tali Lanyard')
 @section('meta_description', 'Lihat semua artikel yang ditulis oleh ' . $displayName . ' di blog Pusat Tali Lanyard. Tips desain lanyard custom, branding, event & panduan produksi Indonesia.')
 @section('seo_canonical', config('app.url') . '/blog/penulis/' . $authorSlug)
@@ -12,103 +22,103 @@
   @section('seo_noindex', '1')
 @endif
 
+@push('head')
+  <link rel="stylesheet" href="/css/blog-author.css?v={{ $authorCssVersion }}">
+@endpush
 @push('schema')
   @include('components.schema.author')
 @endpush
 
 @section('content')
-@php
-  $img = fn ($src) => \App\Support\AssetUrl::relative($src);
-  $displayName = isset($displayName) ? $displayName : ($author->name ?: 'Rama Angriawan');
-  $isAdminFallback = isset($isAdminFallback) ? $isAdminFallback : false;
-  try { $bioRaw = $author->bio; } catch (\Throwable $e) { $bioRaw = null; }
-  $bioText = $bioRaw ?: 'Penulis & spesialis lanyard custom di Indonesia. Berbagi tips desain, branding, event, dan panduan produksi lanyard berkualitas. Fokus pada kebutuhan kantor, komunitas, sekolah, dan instansi di Indonesia Raya.';
-  if ($isAdminFallback) {
-    $bioText = 'Rama Angriawan — Penulis & spesialis lanyard custom di Indonesia. Berbagi tips desain yang bikin orang saling nengok, panduan branding, event, dan produksi lanyard berkualitas untuk kebutuhan kantor, komunitas, sekolah, dan instansi.';
-  }
-@endphp
-
-{{-- Author Profile --}}
-<section class="bg-white pt-16 sm:pt-20 pb-10">
-  <div class="mx-auto max-w-[1280px] px-6 lg:px-10">
-    <div class="max-w-[720px] mx-auto text-center">
-      {{-- Breadcrumb --}}
-      <nav class="flex items-center justify-center gap-2 text-[13px] font-medium text-slate-400 mb-8">
-        <a href="/blog" class="hover:text-slate-800 transition-colors">Blog</a>
-        <span class="text-slate-300">/</span>
-        <span class="text-slate-700">{{ $displayName }}</span>
-      </nav>
-
-      {{-- Avatar --}}
-      <div class="mb-4">
-        @if($author->avatar)
-        <img src="{{ $img($author->avatar) }}" alt="{{ $displayName }} — penulis Pusat Tali Lanyard" class="rounded-full object-cover mx-auto bg-slate-100 shadow-sm" style="width: 80px; height: 80px;" width="80" height="80" loading="lazy" decoding="async" />
-        @else
-        <div class="rounded-full bg-slate-900 text-white text-2xl font-bold flex items-center justify-center mx-auto shadow-sm select-none" aria-hidden="true" style="width: 80px; height: 80px;">
-          {{ strtoupper(mb_substr($displayName, 0, 1)) }}
-        </div>
+<main class="author-page">
+  <section class="author-hero" aria-labelledby="author-page-title">
+    <div class="author-container author-hero__layout">
+      <div class="author-hero__content">
+        <nav class="author-breadcrumb" aria-label="Breadcrumb">
+          <a href="{{ route('blog.index') }}">Blog</a>
+          <span aria-hidden="true">/</span>
+          <span aria-current="page">{{ $displayName }}</span>
+        </nav>
+        <p class="author-eyebrow">Penulis</p>
+        <h1 id="author-page-title">{{ $displayName }}</h1>
+        @if($bioText)
+          <p class="author-bio">{{ $bioText }}</p>
         @endif
-      </div>
-
-      <h1 class="text-3xl md:text-4xl font-bold tracking-tight text-slate-900 mb-4">{{ $displayName }}</h1>
-      <p class="text-slate-600 text-[15px] leading-6 max-w-[60ch] mx-auto">
-        {{ $bioText }}
-      </p>
-    </div>
-  </div>
-</section>
-
-{{-- Author Posts --}}
-<section class="bg-white py-12 border-t border-slate-100">
-  <div class="mx-auto max-w-[1280px] px-6 lg:px-10">
-    <div class="mb-8 text-center sm:text-left">
-      <h2 class="text-xl font-bold tracking-tight text-slate-900">{{ $posts->total() }} Tulisan</h2>
-    </div>
-
-    @if($posts->isEmpty())
-      <div class="py-12 bg-slate-50 rounded-2xl text-center border border-slate-100 max-w-[800px] mx-auto">
-        <p class="text-[15px] font-semibold text-slate-500">Belum ada artikel</p>
-        <p class="text-[13px] text-slate-400 mt-1">Penulis ini belum menerbitkan artikel.</p>
-      </div>
-    @else
-      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-        @foreach($posts as $post)
-        @php
-          $thumb = $img($post->featuredImage);
-        @endphp
-        <a href="/blog/{{ $post->slug }}" class="group/p flex flex-col h-full bg-white rounded-2xl border border-slate-200/60 overflow-hidden hover:shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all duration-300 hover:-translate-y-1">
-          <div class="aspect-[16/10] w-full bg-slate-100 overflow-hidden">
-            @if($thumb)
-            <img src="{{ $thumb }}" alt="{{ $post->title }}" class="w-full h-full object-cover group-hover/p:scale-105 transition-transform duration-500" loading="lazy" decoding="async" width="400" height="250" />
-            @else
-            <div class="w-full h-full bg-slate-50"></div>
-            @endif
-          </div>
-          <div class="p-5 flex flex-col flex-1">
-            <div class="flex items-center gap-2 mb-3 text-[11px] font-semibold tracking-wide text-slate-500 uppercase">
-              @if($post->category)
-              <span class="text-slate-900">{{ $post->category->name }}</span>
-              <span class="text-slate-300">·</span>
-              @endif
-              <span>{{ \Carbon\Carbon::parse($post->createdAt)->translatedFormat('j M Y') }}</span>
-            </div>
-            <h3 class="text-[15px] md:text-base font-bold tracking-tight text-slate-900 leading-[1.4] group-hover/p:text-slate-700 transition-colors line-clamp-3 mb-2">
-              {{ $post->title }}
-            </h3>
-          </div>
-        </a>
-        @endforeach
-      </div>
-
-      {{-- Pagination --}}
-      @if($posts->hasPages())
-        <div class="mt-12 flex justify-center">
-          {{ $posts->links() }}
+        <div class="author-summary" aria-label="Ringkasan penulis">
+          <strong>{{ $articleCount }}</strong>
+          <span>{{ $articleCount === 1 ? 'artikel diterbitkan' : 'artikel diterbitkan' }}</span>
         </div>
+      </div>
+
+      <div class="author-portrait" aria-label="Foto {{ $displayName }}">
+        <div class="author-portrait__frame">
+          @if($avatar)
+            <img src="{{ $avatar }}" @if($avatarSrcset) srcset="{{ $avatarSrcset }}" sizes="(min-width: 768px) 360px, 72vw" @endif alt="{{ $displayName }}, penulis Pusat Tali Lanyard" width="560" height="560" loading="eager" decoding="async">
+          @else
+            <span aria-hidden="true">{{ strtoupper(mb_substr($displayName, 0, 1)) }}</span>
+          @endif
+        </div>
+        <p>Wawasan produksi, desain, dan penggunaan lanyard.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="author-articles" aria-labelledby="author-articles-title">
+    <div class="author-container">
+      <header class="author-section-heading">
+        <div>
+          <p class="author-eyebrow">Arsip Penulis</p>
+          <h2 id="author-articles-title">Tulisan dari {{ $displayName }}</h2>
+        </div>
+        <p>{{ $articleCount }} {{ $articleCount === 1 ? 'artikel' : 'artikel' }}</p>
+      </header>
+
+      @if($posts->isEmpty())
+        <div class="author-empty">
+          <span class="material-symbols-outlined" aria-hidden="true">article</span>
+          <h3>Belum ada artikel</h3>
+          <p>Penulis ini belum menerbitkan artikel. Jelajahi arsip blog untuk menemukan wawasan lainnya.</p>
+          <a href="{{ route('blog.index') }}" data-button-motion><span>Lihat Semua Artikel</span></a>
+        </div>
+      @else
+        <div class="author-grid">
+          @foreach($posts as $post)
+            @php
+              $postImage = AssetUrl::relative($post->featuredImage);
+              $postSrcset = ResponsiveImage::srcset($postImage);
+              $excerpt = $post->metaDescription ?: Str::limit(trim(strip_tags((string) $post->content)), 145);
+            @endphp
+            <article class="author-card">
+              <a class="author-card__media" href="/blog/{{ $post->slug }}" aria-label="Baca {{ $post->title }}">
+                @if($postImage)
+                  <img src="{{ $postImage }}" @if($postSrcset) srcset="{{ $postSrcset }}" sizes="(min-width: 1024px) 400px, (min-width: 700px) 50vw, 100vw" @endif alt="{{ $post->title }}" width="640" height="400" loading="lazy" decoding="async">
+                @else
+                  <span class="author-card__fallback material-symbols-outlined" aria-hidden="true">article</span>
+                @endif
+              </a>
+              <div class="author-card__content">
+                <div class="author-card__meta">
+                  <span>{{ $post->category->name ?? 'Wawasan Lanyard' }}</span>
+                  <span aria-hidden="true">•</span>
+                  <time datetime="{{ \Carbon\Carbon::parse($post->createdAt)->toDateString() }}">{{ \Carbon\Carbon::parse($post->createdAt)->translatedFormat('j M Y') }}</time>
+                </div>
+                <h3><a href="/blog/{{ $post->slug }}">{{ $post->title }}</a></h3>
+                <p>{{ $excerpt }}</p>
+                <a class="author-card__link" href="/blog/{{ $post->slug }}">Baca artikel<span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a>
+              </div>
+            </article>
+          @endforeach
+        </div>
+
+        @if($posts->hasPages())
+          <div class="author-pagination">
+            {{ $posts->links() }}
+          </div>
+        @endif
       @endif
-    @endif
-  </div>
-</section>
+    </div>
+  </section>
+</main>
 
 @include('components.footer')
 @endsection

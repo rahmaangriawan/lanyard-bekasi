@@ -21,8 +21,11 @@ return Application::configure(basePath: dirname(__DIR__))
         __DIR__.'/../app/Console/Commands',
     ])
     ->withMiddleware(function (Middleware $middleware): void {
-        // Trust CloudPanel / Nginx reverse proxy
-        $middleware->trustProxies(at: '*');
+        $trustedProxies = array_values(array_filter(array_map(
+            'trim',
+            explode(',', (string) env('TRUSTED_PROXIES', '127.0.0.1,::1')),
+        )));
+        $middleware->trustProxies(at: $trustedProxies);
 
         $middleware->prepend(HandlePublicRedirects::class);
         $middleware->append(SecurityHeaders::class);

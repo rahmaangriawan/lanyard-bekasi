@@ -1,28 +1,19 @@
 @extends('layouts.public')
 
-@section('title', 'Blog Pusat Tali Lanyard — Tips, Insight & Update')
-
-@if(request()->filled('q') || request()->integer('page', 1) > 1)
-  @section('seo_noindex', '1')
-@endif
-
-@section('content')
 @php
   use App\Models\Post;
-  use Illuminate\Support\Facades\Cache;
+  use App\Support\AssetUrl;
+  use App\Support\ResponsiveImage;
 
   $search = mb_substr(trim((string) request('q', '')), 0, 255);
   $escapedSearch = str_replace(['!', '%', '_'], ['!!', '!%', '!_'], $search);
   $page = max(1, (int) request('page', 1));
   $perPage = 9;
-
-  $query = Post::with('category', 'author')
-    ->where('published', true);
+  $query = Post::with('category', 'author')->where('published', true);
 
   if ($search !== '') {
     $query->where(function ($q) use ($escapedSearch) {
       $term = "%{$escapedSearch}%";
-
       $q->whereRaw("title LIKE ? ESCAPE '!'", [$term])
         ->orWhereRaw("metaDescription LIKE ? ESCAPE '!'", [$term])
         ->orWhereRaw("content LIKE ? ESCAPE '!'", [$term]);
@@ -32,220 +23,124 @@
   $query->orderBy('createdAt', 'desc');
   $total = $query->count();
   $posts = $query->skip(($page - 1) * $perPage)->take($perPage)->get();
-  $hasMore = ($page * $perPage) < $total;
-  $nextPage = $hasMore ? $page + 1 : null;
-
-  // Fallback dummy data
-  if ($posts->isEmpty() && !$search) {
-    $posts = collect([
-      (object) [
-        'title' => 'Pentingnya Lanyard untuk Keamanan Event Skala Besar',
-        'slug' => 'pentingnya-lanyard-event',
-        'metaDescription' => 'Lanyard bukan sekadar aksesoris, tapi instrumen keamanan penting untuk identifikasi peserta di event besar. Simak panduan lengkapnya.',
-        'featuredImage' => null,
-        'category' => (object) ['name' => 'Events'],
-        'author' => (object) ['name' => 'Tim Pusat Tali Lanyard'],
-        'createdAt' => now()->subDays(2),
-      ],
-      (object) [
-        'title' => 'Tips Mendesain Lanyard yang Elegan untuk Brand Perusahaan',
-        'slug' => 'tips-mendesain-lanyard',
-        'metaDescription' => 'Pemilihan warna dan font yang tepat sangat krusial dalam mencerminkan identitas brand perusahaan Anda.',
-        'featuredImage' => null,
-        'category' => (object) ['name' => 'Branding'],
-        'author' => (object) ['name' => 'Tim Pusat Tali Lanyard'],
-        'createdAt' => now()->subDays(5),
-      ],
-      (object) [
-        'title' => 'Tissue vs Polyester: Mana Bahan Lanyard Terbaik?',
-        'slug' => 'tissue-vs-polyester',
-        'metaDescription' => 'Membedah perbedaan kualitas, kenyamanan, dan harga antara material tissue dan polyester untuk lanyard custom.',
-        'featuredImage' => null,
-        'category' => (object) ['name' => 'Material'],
-        'author' => (object) ['name' => 'Tim Pusat Tali Lanyard'],
-        'createdAt' => now()->subDays(7),
-      ],
-      (object) [
-        'title' => '5 Jenis Hook Lanyard yang Wajib Anda Ketahui',
-        'slug' => 'jenis-hook-lanyard',
-        'metaDescription' => 'Dari hook plastik standar hingga stainless steel premium, ini dia pilihan hook terbaik untuk lanyard Anda.',
-        'featuredImage' => null,
-        'category' => (object) ['name' => 'Aksesoris'],
-        'author' => (object) ['name' => 'Tim Pusat Tali Lanyard'],
-        'createdAt' => now()->subDays(9),
-      ],
-      (object) [
-        'title' => 'Panduan Lengkap Sablon Lanyard: Teknik & Hasil Terbaik',
-        'slug' => 'panduan-sablon-lanyard',
-        'metaDescription' => 'Teknik sablon yang tepat menghasilkan warna tajam dan tahan lama untuk lanyard promosi perusahaan Anda.',
-        'featuredImage' => null,
-        'category' => (object) ['name' => 'Produksi'],
-        'author' => (object) ['name' => 'Tim Pusat Tali Lanyard'],
-        'createdAt' => now()->subDays(12),
-      ],
-      (object) [
-        'title' => 'Mengapa Perusahaan Multinasional Memilih Lanyard Custom?',
-        'slug' => 'lanyard-custom-korporat',
-        'metaDescription' => 'Lanyard custom jadi bagian dari strategi branding korporat. Pelajari alasannya di sini.',
-        'featuredImage' => null,
-        'category' => (object) ['name' => 'Korporat'],
-        'author' => (object) ['name' => 'Tim Pusat Tali Lanyard'],
-        'createdAt' => now()->subDays(15),
-      ],
-      (object) [
-        'title' => 'Ukuran Standar Tali ID Card: Panduan Lengkap',
-        'slug' => 'ukuran-tali-id-card',
-        'metaDescription' => 'Berapa ukuran ideal tali ID Card? Simak rekomendasi ukuran standar untuk berbagai kebutuhan.',
-        'featuredImage' => null,
-        'category' => (object) ['name' => 'Tips'],
-        'author' => (object) ['name' => 'Tim Pusat Tali Lanyard'],
-        'createdAt' => now()->subDays(18),
-      ],
-      (object) [
-        'title' => 'Cetak Lanyard Custom untuk Seminar Kampus: Budget-Friendly',
-        'slug' => 'lanyard-seminar-kampus',
-        'metaDescription' => 'Tips hemat cetak lanyard custom untuk acara kampus tanpa mengorbankan kualitas.',
-        'featuredImage' => null,
-        'category' => (object) ['name' => 'Edukasi'],
-        'author' => (object) ['name' => 'Tim Pusat Tali Lanyard'],
-        'createdAt' => now()->subDays(21),
-      ],
-      (object) [
-        'title' => 'Perbandingan Harga Lanyard Custom di Jabodetabek 2025',
-        'slug' => 'perbandingan-harga-lanyard',
-        'metaDescription' => 'Kami bandingkan harga cetak lanyard custom dari berbagai vendor di Jabodetabek. Simak hasilnya!',
-        'featuredImage' => null,
-        'category' => (object) ['name' => 'Review'],
-        'author' => (object) ['name' => 'Tim Pusat Tali Lanyard'],
-        'createdAt' => now()->subDays(25),
-      ],
-    ]);
-    $total = $posts->count();
-    $hasMore = false;
-  }
-
-  $img = fn ($src) => \App\Support\AssetUrl::relative($src);
+  $hasPrevious = $page > 1;
+  $hasNext = ($page * $perPage) < $total;
+  $latestPost = $posts->first();
+  $gridPosts = $posts;
+  $imageUrl = fn ($source) => AssetUrl::relative($source);
+  $readingTime = static function ($post): int {
+    $text = trim(strip_tags((string) ($post->content ?? '')));
+    $words = $text === '' ? 0 : count(preg_split('/\s+/', $text));
+    return max(1, (int) ceil($words / 200));
+  };
+  $defaultDescription = 'Artikel seputar produksi lanyard, desain, branding, material, dan kebutuhan event untuk membantu Anda memilih produk yang tepat.';
+  $ogImage = $latestPost?->featuredImage ?: '/uploads/pusat-tali-lanyard-logo.webp';
+  $blogCssPath = public_path('css/blog-index.css');
+  $blogCssVersion = file_exists($blogCssPath) ? filemtime($blogCssPath) : 1;
 @endphp
 
-{{-- Hero --}}
-<section class="bg-white py-16 sm:py-20 border-b border-slate-200">
-  <div class="mx-auto max-w-[1280px] px-6 lg:px-10">
-    <p class="text-xs font-extrabold uppercase tracking-normal text-slate-600">Blog</p>
-    <h1 class="mt-4 font-bold leading-[1.08] text-slate-900" style="font-size: clamp(2rem, 4vw, 2.75rem);">Update & Insight Lanyard</h1>
-    <p class="mt-4 max-w-2xl text-base leading-7 text-slate-600">Artikel terbaru seputar lanyard custom, tips branding, tren event, dan panduan cetak untuk kebutuhan profesional Anda.</p>
+@section('title', 'Blog dan Wawasan Lanyard | Pusat Tali Lanyard')
+@section('meta_description', $defaultDescription)
+@section('seo_canonical', route('blog.index'))
+@section('seo_og_image', $ogImage)
+@if($search !== '' || $page > 1)
+  @section('seo_noindex', '1')
+@endif
 
-    {{-- Search --}}
-    <form class="mt-8 flex max-w-2xl gap-3" method="GET" action="/blog">
-      <input
-        class="min-h-12 min-w-0 flex-1 rounded-xl border border-slate-300 bg-white px-4 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-slate-600 focus:ring-2 focus:ring-slate-200"
-        type="search"
-        name="q"
-        value="{{ $search }}"
-        maxlength="255"
-        placeholder="Cari artikel..."
-        autocomplete="off"
-      />
-      <button class="min-h-12 shrink-0 rounded-xl bg-slate-800 px-5 text-sm font-bold text-white transition hover:bg-slate-900 active:scale-95" type="submit">Cari</button>
-      @if ($search)
-      <a href="/blog" class="min-h-12 shrink-0 flex items-center rounded-xl border border-slate-300 px-4 text-sm font-semibold text-slate-600 hover:bg-slate-100 transition">Hapus</a>
-      @endif
-    </form>
+@push('head')
+  <link rel="stylesheet" href="/css/blog-index.css?v={{ $blogCssVersion }}">
+@endpush
+@push('schema')
+  @include('components.schema.blog-index', ['posts' => $posts])
+@endpush
 
-    <p class="mt-4 text-sm text-slate-500">
-      @if($search)
-        @if($total > 0)
-        Menampilkan {{ $posts->count() }} hasil untuk "<strong>{{ $search }}</strong>"
-        @else
-        Tidak ada artikel yang cocok untuk "<strong>{{ $search }}</strong>"
-        @endif
+@section('content')
+<section class="blog-hero" aria-labelledby="blog-page-title">
+  <div class="blog-container blog-hero__layout">
+    <div class="blog-hero__copy">
+      <p class="blog-eyebrow">Blog &amp; Wawasan</p>
+      <h1 id="blog-page-title">Artikel &amp; Insight Lanyard untuk Bisnis dan Event</h1>
+      <p>Temukan panduan produksi, desain, branding, material, dan kebutuhan event untuk membantu Anda memilih lanyard yang tepat.</p>
+    </div>
+    <div class="blog-search-panel">
+      <p class="blog-search-panel__label">Cari topik yang Anda butuhkan</p>
+      <form class="blog-search" role="search" method="GET" action="{{ route('blog.index') }}">
+        <label class="sr-only" for="blog-search-input">Cari artikel</label>
+        <input id="blog-search-input" type="search" name="q" value="{{ $search }}" maxlength="255" placeholder="Contoh: bahan lanyard" autocomplete="off">
+        <button type="submit" data-button-motion><span>Cari Artikel</span></button>
+      </form>
+      @if($search !== '')
+        <div class="blog-search-panel__status">
+          <p>{{ $total }} hasil untuk “{{ $search }}”</p>
+          <a href="{{ route('blog.index') }}">Hapus pencarian</a>
+        </div>
       @else
-        {{ $total > 0 ? "Menampilkan {$posts->count()} dari {$total} artikel" : 'Belum ada artikel tersedia' }}
+        <p class="blog-search-panel__status">{{ $total }} artikel untuk menambah wawasan Anda.</p>
       @endif
-    </p>
+    </div>
   </div>
 </section>
 
-{{-- Blog Grid --}}
-<section class="bg-slate-50 py-12 sm:py-16">
-  <div class="mx-auto max-w-[1280px] px-6 lg:px-10">
-    @if ($posts->isEmpty())
-      <div class="text-center py-20">
-        <span class="material-symbols-outlined text-6xl text-slate-300">article</span>
-        <h2 class="mt-6 text-xl font-bold text-slate-900">Artikel tidak ditemukan</h2>
-        <p class="mt-2 text-sm text-slate-600">Coba gunakan kata kunci yang berbeda.</p>
+<section class="blog-listing" aria-labelledby="blog-listing-title">
+  <div class="blog-container">
+    @if($posts->isEmpty())
+      <div class="blog-empty">
+        <span class="material-symbols-outlined" aria-hidden="true">article</span>
+        <h2 id="blog-listing-title">Artikel tidak ditemukan</h2>
+        <p>Coba gunakan kata kunci yang lebih umum atau lihat kembali seluruh artikel kami.</p>
+        <a href="{{ route('blog.index') }}" data-button-motion><span>Lihat Semua Artikel</span></a>
       </div>
     @else
-    <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-      @foreach ($posts as $index => $post)
-      @php
-        $textOnly = trim(strip_tags($post->content ?? ''));
-        $wordCount = $textOnly ? count(preg_split('/\s+/', $textOnly)) : 0;
-        $readingTime = max(1, (int) ceil($wordCount / 200));
-      @endphp
-      <article class="group flex min-h-full flex-col rounded-[20px] border border-slate-200 bg-white p-4 shadow-sm transition hover:-translate-y-1 hover:shadow-md hover:border-slate-300">
-        {{-- Image --}}
-        <a href="/blog/{{ $post->slug }}" class="overflow-hidden rounded-[14px] bg-slate-100 block">
-          @if($post->featuredImage)
-          <img class="aspect-[4/3] w-full object-cover transition duration-500 group-hover:scale-[1.03]" src="{{ $img($post->featuredImage) }}" alt="{{ $post->title }}" loading="lazy" decoding="async" width="360" height="270" />
-          @else
-          <div class="aspect-[4/3] w-full bg-slate-200 group-hover:scale-[1.03] transition-transform duration-500 flex items-center justify-center">
-            <span class="material-symbols-outlined text-5xl text-slate-300">article</span>
-          </div>
-          @endif
-        </a>
+      <div class="blog-section-heading{{ $search !== '' ? ' blog-section-heading--search' : '' }}">
+        <p class="blog-eyebrow">{{ $search !== '' ? 'Hasil Pencarian' : 'Wawasan Terbaru' }}</p>
+        <h2 id="blog-listing-title">{{ $search !== '' ? 'Artikel yang Ditemukan' : 'Artikel Terbaru' }}</h2>
+      </div>
 
-        {{-- Meta Row: Author Avatar, Name, Date, Reading Time --}}
-        <div class="mt-5 flex items-center justify-between">
-          <div class="flex items-center gap-2.5">
-            @if(!empty($post->author->avatar))
-            <img src="{{ $img($post->author->avatar) }}" alt="{{ $post->author->name }}" class="h-[30px] w-[30px] rounded-full object-cover shadow-sm bg-slate-100" width="30" height="30" loading="lazy" decoding="async" />
-            @else
-            <div class="grid h-[30px] w-[30px] place-items-center rounded-full bg-slate-800 text-[11px] font-extrabold text-white shadow-sm">
-              {{ strtoupper(substr($post->author->name ?? 'Admin', 0, 1)) }}
-            </div>
-            @endif
-            <span class="text-[13px] font-bold text-slate-800 line-clamp-1 max-w-[130px] sm:max-w-[150px]">{{ $post->author->name ?? 'Tim Lanyard' }}</span>
-          </div>
-          <div class="text-[12px] font-medium text-slate-500 whitespace-nowrap">
-            <span>{{ \Carbon\Carbon::parse($post->createdAt)->translatedFormat('j M Y') }}</span>
-            <span class="mx-1 text-slate-300">•</span>
-            <span>{{ $readingTime }} mins</span>
-          </div>
+      @if($gridPosts->isNotEmpty())
+        <div class="blog-grid">
+          @foreach($gridPosts as $post)
+            @php
+              $postImage = $imageUrl($post->featuredImage);
+              $postSrcset = ResponsiveImage::srcset($postImage);
+            @endphp
+            <article class="blog-card">
+              <a class="blog-card__media" href="/blog/{{ $post->slug }}" aria-label="Baca {{ $post->title }}">
+                @if($postImage)
+                  <img src="{{ $postImage }}" @if($postSrcset) srcset="{{ $postSrcset }}" sizes="(min-width: 1024px) 400px, (min-width: 700px) 50vw, 100vw" @endif alt="{{ $post->title }}" width="640" height="400" loading="lazy" decoding="async">
+                @else
+                  <span class="blog-image-fallback material-symbols-outlined" aria-hidden="true">article</span>
+                @endif
+              </a>
+              <div class="blog-card__content">
+                <p class="blog-category">{{ $post->category->name ?? 'Wawasan Lanyard' }}</p>
+                <h3><a href="/blog/{{ $post->slug }}">{{ $post->title }}</a></h3>
+                <p class="blog-excerpt">{{ $post->metaDescription ?: 'Baca insight terbaru dari Pusat Tali Lanyard.' }}</p>
+                <div class="blog-card__footer">
+                  <div class="blog-meta">
+                    <time datetime="{{ \Carbon\Carbon::parse($post->createdAt)->toDateString() }}">{{ \Carbon\Carbon::parse($post->createdAt)->translatedFormat('j M Y') }}</time><span aria-hidden="true">•</span><span>{{ $readingTime($post) }} menit</span>
+                  </div>
+                  <a class="blog-card__arrow" href="/blog/{{ $post->slug }}" aria-label="Baca artikel {{ $post->title }}"><span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a>
+                </div>
+              </div>
+            </article>
+          @endforeach
         </div>
+      @endif
 
-        {{-- Body Content --}}
-        <div class="mt-4 flex flex-1 flex-col">
-          {{-- Title --}}
-          <a href="/blog/{{ $post->slug }}" class="block mb-2.5">
-            <h2 class="text-[1.1rem] font-bold leading-[1.35] text-slate-900 group-hover:text-slate-700 transition-colors line-clamp-2">
-              {{ $post->title }}
-            </h2>
-          </a>
-
-          {{-- Excerpt --}}
-          <p class="text-[14px] leading-relaxed text-slate-500 line-clamp-2">
-            {{ $post->metaDescription ?: 'Baca selengkapnya tentang topik ini di blog Pusat Tali Lanyard.' }}
-          </p>
-        </div>
-      </article>
-      @endforeach
-    </div>
-
-    {{-- Pagination / Load More --}}
-    @if ($hasMore)
-    <div class="mt-12 text-center">
-      <a
-        href="?{{ http_build_query(['q' => $search, 'page' => $nextPage]) }}"
-        class="inline-flex min-h-12 items-center rounded-xl border border-slate-800 px-6 text-sm font-bold text-slate-800 transition hover:bg-slate-800 hover:text-white active:scale-95"
-      >
-        Muat lebih banyak
-      </a>
-    </div>
-    @endif
+      @if($hasPrevious || $hasNext)
+        <nav class="blog-pagination" aria-label="Navigasi halaman artikel">
+          @if($hasPrevious)
+            <a href="?{{ http_build_query(['q' => $search, 'page' => $page - 1]) }}"><span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>Artikel sebelumnya</a>
+          @else <span></span> @endif
+          <span>Halaman {{ $page }}</span>
+          @if($hasNext)
+            <a href="?{{ http_build_query(['q' => $search, 'page' => $page + 1]) }}">Artikel berikutnya<span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a>
+          @else <span></span> @endif
+        </nav>
+      @endif
     @endif
   </div>
 </section>
 
-@include('components.cta')
 @include('components.footer')
 @endsection

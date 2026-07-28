@@ -6,142 +6,133 @@ use App\Models\Category;
 use App\Models\Comment;
 use App\Models\Media;
 use App\Models\Post;
+use App\Support\AuthorProfile;
+use App\Support\HtmlSanitizer;
 use DOMDocument;
 use DOMElement;
 use DOMNode;
 use DOMXPath;
 use Illuminate\Console\Command;
+use Illuminate\Http\Client\Response;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use RuntimeException;
 use Throwable;
 
 class ImportPusatTaliLanyardBlog extends Command
 {
     protected $signature = 'blog:import-pusattalilanyard
-        {--dry-run : Crawl and parse without changing database or files}
+        {--dry-run : Fetch and validate without changing database or files}
         {--keep-old : Keep existing local posts instead of replacing them}
-        {--limit= : Limit imported articles for testing}';
+        {--limit= : Limit imported articles for testing (requires --dry-run or --keep-old)}';
 
-    protected $description = 'Scrape pusattalilanyard.com blog posts, download images, and import them into the local CMS.';
+    protected $description = 'Import the complete pusattalilanyard.com WordPress blog and its images into the local CMS.';
 
     private const BASE_URL = 'https://pusattalilanyard.com';
 
-    private const BLOG_URL = 'https://pusattalilanyard.com/blog';
+    private const POSTS_ENDPOINT = self::BASE_URL.'/wp-json/wp/v2/posts';
+
+    private const IMPORT_DIRECTORY = 'uploads/blog-import';
 
     private int $imageSuccessCount = 0;
 
-    private int $imageFailureCount = 0;
+    /** @var array<int, array<string, mixed>> */
+    private array $mediaById = [];
 
-    /**
-     * @var array<string, string>
-     */
-    private array $downloadedImages = [];
+    /** @var array<int, string> */
+    private array $tagNames = [];
 
     public function handle(): int
     {
+        $this->imageSuccessCount = 0;
+        $this->mediaById = [];
+        $this->tagNames = [];
+
         $dryRun = (bool) $this->option('dry-run');
         $keepOld = (bool) $this->option('keep-old');
         $limit = $this->parseLimit();
+        $primaryAuthor = AuthorProfile::primaryAuthor();
 
-        $this->info('Crawling artikel dari '.self::BLOG_URL);
-
-        $articleUrls = $this->collectArticleUrls($limit);
-
-        if ($articleUrls === []) {
-            $this->error('Tidak ada artikel yang berhasil ditemukan. Data lokal tidak diubah.');
+        if (! $primaryAuthor) {
+            $this->error('Import dibatalkan karena belum ada akun ADMIN yang dapat dijadikan penulis blog.');
 
             return self::FAILURE;
         }
 
-        $this->info('Artikel ditemukan: '.count($articleUrls));
+        if ($limit !== null && ! $dryRun && ! $keepOld) {
+            $this->error('--limit hanya boleh dipakai bersama --dry-run atau --keep-old agar tidak menghapus sebagian besar artikel.');
 
-        $articles = [];
-        foreach ($articleUrls as $url) {
+            return self::FAILURE;
+        }
+
+        $this->info('Mengambil artikel melalui WordPress REST API '.self::POSTS_ENDPOINT);
+
+        try {
+            $sourcePosts = $this->collectSourcePosts();
+            $this->tagNames = $this->collectTerms('tags');
+            $this->assertUniqueSlugs($sourcePosts);
+        } catch (Throwable $exception) {
+            $this->error('Gagal mengambil inventory artikel: '.$exception->getMessage());
+
+            return self::FAILURE;
+        }
+
+        if ($limit !== null) {
+            $sourcePosts = array_slice($sourcePosts, 0, $limit);
+        }
+
+        $knownSlugs = array_fill_keys(array_column($sourcePosts, 'slug'), true);
+        $runId = Str::lower(Str::random(12));
+        $stagingDirectory = self::IMPORT_DIRECTORY.'-staging-'.$runId;
+        $backupDirectory = self::IMPORT_DIRECTORY.'-backup-'.$runId;
+        $prepared = [];
+
+        try {
+            foreach ($sourcePosts as $sourcePost) {
+                $article = $this->prepareArticle($sourcePost, $knownSlugs, $stagingDirectory, ! $dryRun);
+                $prepared[] = $article;
+                $this->line('Valid: '.$article['title']);
+            }
+
+            if ($prepared === []) {
+                throw new RuntimeException('Tidak ada artikel valid yang ditemukan.');
+            }
+
+            $this->validatePreparedArticles($prepared);
+
+            if ($dryRun) {
+                $this->info('Dry run selesai. Database dan filesystem tidak diubah.');
+                $this->renderSummary($prepared, false, $keepOld);
+
+                return self::SUCCESS;
+            }
+
+            if ($keepOld) {
+                $this->mergeExistingFilesIntoStaging($stagingDirectory);
+            }
+
+            $this->swapImportDirectory($stagingDirectory, $backupDirectory);
+
             try {
-                $article = $this->parseArticle($url);
-
-                if (! $article) {
-                    $this->warn("Lewati artikel karena konten kosong: {$url}");
-                    continue;
-                }
-
-                $articles[] = $article;
-                $this->line('Parsed: '.$article['title']);
+                $this->persistArticles($prepared, $keepOld, $primaryAuthor->id);
             } catch (Throwable $exception) {
-                $this->warn("Gagal parse {$url}: ".$exception->getMessage());
+                $this->restoreImportDirectory($backupDirectory);
+                throw $exception;
             }
-        }
 
-        if ($articles === []) {
-            $this->error('Tidak ada artikel valid setelah parsing. Data lokal tidak diubah.');
+            Storage::disk('public')->deleteDirectory($backupDirectory);
+        } catch (Throwable $exception) {
+            Storage::disk('public')->deleteDirectory($stagingDirectory);
+            $this->error('Import dibatalkan; data lama dipertahankan. '.$exception->getMessage());
 
             return self::FAILURE;
         }
-
-        if ($dryRun) {
-            $this->info('Dry run selesai. Tidak ada data atau file yang diubah.');
-            $this->table(
-                ['Metric', 'Value'],
-                [
-                    ['Artikel valid', count($articles)],
-                    ['Gambar akan diunduh', array_sum(array_map(fn (array $article) => count($article['imageUrls']), $articles))],
-                ],
-            );
-
-            return self::SUCCESS;
-        }
-
-        if (! $keepOld) {
-            Storage::disk('public')->deleteDirectory('uploads/blog-import');
-            Media::query()
-                ->where('filepath', 'like', 'storage/uploads/blog-import/%')
-                ->orWhere('url', 'like', '/storage/uploads/blog-import/%')
-                ->delete();
-        }
-
-        DB::transaction(function () use ($articles, $keepOld): void {
-            $category = Category::firstOrCreate(
-                ['slug' => 'artikel', 'type' => 'BLOG'],
-                ['name' => 'Artikel', 'description' => 'Artikel Pusat Tali Lanyard'],
-            );
-
-            if (! $keepOld) {
-                Comment::query()->whereIn('postId', Post::query()->select('id'))->delete();
-                Post::query()->delete();
-            }
-
-            foreach ($articles as $article) {
-                $imported = $this->importArticleImages($article);
-
-                Post::updateOrCreate(
-                    ['slug' => $article['slug']],
-                    [
-                        'title' => $article['title'],
-                        'content' => $imported['content'],
-                        'published' => true,
-                        'featuredImage' => $imported['featuredImage'],
-                        'categoryId' => $category->id,
-                        'createdAt' => $article['createdAt'] ?? now(),
-                        'metaTitle' => $article['metaTitle'] ?: $article['title'],
-                        'metaDescription' => $article['metaDescription'],
-                    ],
-                );
-            }
-        });
 
         $this->info('Import selesai.');
-        $this->table(
-            ['Metric', 'Value'],
-            [
-                ['Artikel diimport', count($articles)],
-                ['Gambar berhasil', $this->imageSuccessCount],
-                ['Gambar gagal', $this->imageFailureCount],
-                ['Mode hapus artikel lama', $keepOld ? 'Tidak, keep-old aktif' : 'Ya'],
-            ],
-        );
+        $this->renderSummary($prepared, true, $keepOld);
 
         return self::SUCCESS;
     }
@@ -149,7 +140,6 @@ class ImportPusatTaliLanyardBlog extends Command
     private function parseLimit(): ?int
     {
         $value = $this->option('limit');
-
         if ($value === null || $value === false || $value === '') {
             return null;
         }
@@ -159,455 +149,461 @@ class ImportPusatTaliLanyardBlog extends Command
         return $limit > 0 ? $limit : null;
     }
 
-    /**
-     * @return list<string>
-     */
-    private function collectArticleUrls(?int $limit): array
+    /** @return list<array<string, mixed>> */
+    private function collectSourcePosts(): array
     {
-        $listingQueue = [self::BLOG_URL];
-        $seenListings = [];
-        $articleUrls = [];
+        $posts = [];
+        $page = 1;
+        $total = null;
+        $totalPages = 1;
 
-        while ($listingQueue !== []) {
-            $listingUrl = array_shift($listingQueue);
-            if (! $listingUrl || isset($seenListings[$listingUrl])) {
-                continue;
+        do {
+            $response = $this->get(self::POSTS_ENDPOINT, [
+                'per_page' => 100,
+                'page' => $page,
+                'orderby' => 'date',
+                'order' => 'desc',
+                '_fields' => 'id,date,modified,slug,link,title,content,excerpt,featured_media,categories,tags',
+            ]);
+
+            $payload = $response->json();
+            if (! is_array($payload) || ! array_is_list($payload)) {
+                throw new RuntimeException("Payload post halaman {$page} tidak valid.");
             }
 
-            $seenListings[$listingUrl] = true;
-            $html = $this->fetchHtml($listingUrl);
-            $xpath = $this->xpath($html);
+            $total ??= (int) $response->header('X-WP-Total');
+            $totalPages = max(1, (int) $response->header('X-WP-TotalPages'));
+            $posts = array_merge($posts, $payload);
+            $page++;
+        } while ($page <= $totalPages);
 
-            foreach ($xpath->query('//a[@href]') ?: [] as $anchor) {
-                if (! $anchor instanceof DOMElement) {
-                    continue;
-                }
-
-                $url = $this->absoluteUrl($anchor->getAttribute('href'), $listingUrl);
-                if (! $url || ! $this->isSameHost($url)) {
-                    continue;
-                }
-
-                if ($this->isArticleUrl($url)) {
-                    $articleUrls[$this->normalizeUrl($url)] = true;
-
-                    if ($limit && count($articleUrls) >= $limit) {
-                        break 2;
-                    }
-
-                    continue;
-                }
-
-                if ($this->isBlogListingUrl($url) && ! isset($seenListings[$this->normalizeUrl($url)])) {
-                    $listingQueue[] = $this->normalizeUrl($url);
-                }
-            }
+        if ($total === null || $total < 1 || count($posts) !== $total) {
+            throw new RuntimeException('Jumlah artikel API tidak lengkap: menerima '.count($posts).', seharusnya '.($total ?? 0).'.');
         }
 
-        return array_keys($articleUrls);
+        return array_values($posts);
+    }
+
+    /** @return array<int, string> */
+    private function collectTerms(string $type): array
+    {
+        $terms = [];
+        $page = 1;
+        $totalPages = 1;
+
+        do {
+            $response = $this->get(self::BASE_URL.'/wp-json/wp/v2/'.$type, [
+                'per_page' => 100,
+                'page' => $page,
+                '_fields' => 'id,name',
+            ]);
+            $totalPages = max(1, (int) ($response->header('X-WP-TotalPages') ?: 1));
+
+            foreach ((array) $response->json() as $term) {
+                if (isset($term['id'], $term['name'])) {
+                    $terms[(int) $term['id']] = $this->decodeText((string) $term['name']);
+                }
+            }
+            $page++;
+        } while ($page <= $totalPages);
+
+        return $terms;
+    }
+
+    /** @param list<array<string, mixed>> $posts */
+    private function assertUniqueSlugs(array $posts): void
+    {
+        $slugs = [];
+        foreach ($posts as $post) {
+            $slug = Str::slug((string) ($post['slug'] ?? ''));
+            if ($slug === '') {
+                throw new RuntimeException('Artikel tanpa slug ditemukan.');
+            }
+            if (isset($slugs[$slug])) {
+                throw new RuntimeException("Slug duplikat ditemukan: {$slug}.");
+            }
+            $slugs[$slug] = true;
+        }
     }
 
     /**
-     * @return array<string, mixed>|null
+     * @param array<string, mixed> $source
+     * @param array<string, bool> $knownSlugs
+     * @return array<string, mixed>
      */
-    private function parseArticle(string $url): ?array
+    private function prepareArticle(array $source, array $knownSlugs, string $stagingDirectory, bool $writeFiles): array
     {
-        $html = $this->fetchHtml($url);
-        $xpath = $this->xpath($html);
-        $title = $this->firstText($xpath, [
-            '//article//h1',
-            '//main//h1',
-            '//h1',
-            '//meta[@property="og:title"]/@content',
-            '//title',
-        ]);
+        $title = $this->decodeText((string) data_get($source, 'title.rendered', ''));
+        $slug = Str::slug((string) ($source['slug'] ?? ''));
+        $content = (string) data_get($source, 'content.rendered', '');
 
-        $title = trim(preg_replace('/\s+\|\s+.*$/', '', $title) ?? $title);
-        if ($title === '') {
-            return null;
+        if ($title === '' || $slug === '' || trim(strip_tags($content)) === '') {
+            throw new RuntimeException('Artikel memiliki title, slug, atau content kosong: '.($slug ?: '(tanpa slug)'));
         }
 
-        $slug = $this->slugFromUrl($url) ?: Str::slug($title);
-        $metaDescription = $this->firstText($xpath, [
-            '//meta[@name="description"]/@content',
-            '//meta[@property="og:description"]/@content',
-        ]);
-        $createdAt = $this->parseDate($this->firstText($xpath, [
-            '//meta[@property="article:published_time"]/@content',
-            '//time[@datetime]/@datetime',
-            '//time',
-        ]));
-        $featuredImage = $this->firstText($xpath, [
-            '//meta[@property="og:image"]/@content',
-            '//meta[@name="twitter:image"]/@content',
-        ]);
+        $content = $this->cleanArticleHtml($content);
+        $content = $this->rewriteArticleLinks($content, $knownSlugs);
+        $downloads = [];
+        $contentImages = $this->extractContentImages($content);
 
-        $contentNode = $this->findContentNode($xpath);
-        if (! $contentNode) {
-            return null;
-        }
-
-        $this->sanitizeNode($contentNode);
-        $this->removeDuplicateTitle($contentNode, $title);
-        $imageUrls = $this->extractImageUrls($contentNode, $url);
-        $primaryImage = $featuredImage !== ''
-            ? ($this->absoluteUrl($featuredImage, $url) ?: $featuredImage)
-            : ($imageUrls[0] ?? null);
-        $this->removeLeadingFeaturedMedia($contentNode);
-        $contentHtml = $this->innerHtml($contentNode);
-
-        if ($featuredImage !== '') {
-            array_unshift($imageUrls, $primaryImage);
-        }
-
-        $imageUrls = array_values(array_unique(array_filter($imageUrls)));
-
-        return [
-            'sourceUrl' => $url,
-            'title' => $title,
-            'slug' => $slug,
-            'content' => $contentHtml,
-            'featuredImageUrl' => $primaryImage,
-            'imageUrls' => $imageUrls,
-            'metaTitle' => $title,
-            'metaDescription' => $metaDescription !== '' ? $metaDescription : Str::limit(strip_tags($contentHtml), 155, ''),
-            'createdAt' => $createdAt,
-        ];
-    }
-
-    /**
-     * @param array<string, mixed> $article
-     * @return array{content: string, featuredImage: ?string}
-     */
-    private function importArticleImages(array $article): array
-    {
-        $rewrites = [];
-        foreach ($article['imageUrls'] as $index => $imageUrl) {
-            $localUrl = $this->downloadImage((string) $imageUrl, (string) $article['slug'], $index + 1);
-            if ($localUrl) {
-                $rewrites[(string) $imageUrl] = $localUrl;
-            }
-        }
-
-        $content = (string) $article['content'];
-        foreach ($rewrites as $remoteUrl => $localUrl) {
-            $content = str_replace($remoteUrl, $localUrl, $content);
-            $content = str_replace(htmlspecialchars($remoteUrl, ENT_QUOTES), $localUrl, $content);
+        foreach ($contentImages as $index => $remoteUrl) {
+            $downloads[$remoteUrl] = $this->downloadImage(
+                $remoteUrl,
+                $slug.'-content-'.str_pad((string) ($index + 1), 2, '0', STR_PAD_LEFT),
+                $stagingDirectory,
+                $writeFiles,
+            );
         }
 
         $featuredImage = null;
-        if ($article['featuredImageUrl'] && isset($rewrites[$article['featuredImageUrl']])) {
-            $featuredImage = $rewrites[$article['featuredImageUrl']];
+        $featuredId = (int) ($source['featured_media'] ?? 0);
+        if ($featuredId > 0) {
+            $media = $this->getMedia($featuredId);
+            $remoteUrl = (string) ($media['source_url'] ?? '');
+            if ($remoteUrl === '') {
+                throw new RuntimeException("Featured image artikel {$slug} tidak memiliki source_url.");
+            }
+            $downloads[$remoteUrl] ??= $this->downloadImage(
+                $remoteUrl,
+                $slug.'-featured',
+                $stagingDirectory,
+                $writeFiles,
+            );
+            $featuredImage = $downloads[$remoteUrl]['url'];
         }
 
-        if (! $featuredImage && $rewrites !== []) {
-            $featuredImage = reset($rewrites) ?: null;
+        foreach ($downloads as $remoteUrl => $download) {
+            $content = str_replace([$remoteUrl, htmlspecialchars($remoteUrl, ENT_QUOTES)], $download['url'], $content);
         }
+
+        $content = $this->normalizeImageAttributes($content);
+        $content = HtmlSanitizer::clean($content);
+
+        if ($this->containsRemoteImage($content) || $this->containsToc($content)) {
+            throw new RuntimeException("Konten {$slug} masih berisi gambar remote atau TOC.");
+        }
+
+        $excerpt = $this->decodeText(strip_tags((string) data_get($source, 'excerpt.rendered', '')));
+        $tagNames = collect((array) ($source['tags'] ?? []))
+            ->map(fn (mixed $id) => $this->tagNames[(int) $id] ?? null)
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
 
         return [
+            'title' => $title,
+            'slug' => $slug,
             'content' => $content,
             'featuredImage' => $featuredImage,
+            'createdAt' => $this->parseDate((string) ($source['date'] ?? '')) ?? now(),
+            'updatedAt' => $this->parseDate((string) ($source['modified'] ?? '')) ?? now(),
+            'metaTitle' => $title,
+            'metaDescription' => Str::limit($excerpt !== '' ? $excerpt : strip_tags($content), 155, ''),
+            'tags' => implode(', ', $tagNames),
+            'media' => array_values($downloads),
         ];
     }
 
-    private function downloadImage(string $url, string $slug, int $index): ?string
+    /** @return array<string, mixed> */
+    private function getMedia(int $id): array
     {
-        if (isset($this->downloadedImages[$url])) {
-            return $this->downloadedImages[$url];
+        if (! isset($this->mediaById[$id])) {
+            $payload = $this->get(self::BASE_URL.'/wp-json/wp/v2/media/'.$id, [
+                '_fields' => 'id,source_url,mime_type,media_details,alt_text',
+            ])->json();
+            if (! is_array($payload)) {
+                throw new RuntimeException("Metadata media {$id} tidak valid.");
+            }
+            $this->mediaById[$id] = $payload;
         }
 
-        try {
-            $response = Http::timeout(30)
-                ->retry(2, 350)
-                ->withHeaders($this->headers())
-                ->get($url);
-
-            if (! $response->ok()) {
-                $this->imageFailureCount++;
-
-                return null;
-            }
-
-            $contentType = strtolower((string) $response->header('Content-Type'));
-            if (! str_starts_with($contentType, 'image/')) {
-                $this->imageFailureCount++;
-
-                return null;
-            }
-
-            $extension = $this->extensionFromContentType($contentType) ?: $this->extensionFromUrl($url) ?: 'jpg';
-            $filename = Str::slug($slug).'-'.str_pad((string) $index, 2, '0', STR_PAD_LEFT).'-'.Str::lower(Str::random(6)).'.'.$extension;
-            $path = 'uploads/blog-import/'.$filename;
-
-            Storage::disk('public')->put($path, $response->body());
-
-            $localUrl = Storage::disk('public')->url($path);
-            Media::create([
-                'filename' => $filename,
-                'filepath' => 'storage/'.$path,
-                'mimetype' => $contentType ?: 'image/'.$extension,
-                'size' => strlen($response->body()),
-                'url' => $localUrl,
-            ]);
-
-            $this->downloadedImages[$url] = $localUrl;
-            $this->imageSuccessCount++;
-
-            return $localUrl;
-        } catch (Throwable $exception) {
-            $this->imageFailureCount++;
-            $this->warn("Gagal download gambar {$url}: ".$exception->getMessage());
-
-            return null;
-        }
+        return $this->mediaById[$id];
     }
 
-    private function fetchHtml(string $url): string
+    /** @return array{filename:string,filepath:string,mimetype:string,size:int,url:string} */
+    private function downloadImage(string $url, string $basename, string $stagingDirectory, bool $writeFile): array
     {
-        $response = Http::timeout(30)
-            ->retry(2, 350)
-            ->withHeaders($this->headers())
-            ->get($url);
+        $response = $this->get($url);
+        $body = $response->body();
+        $contentType = strtolower(trim(explode(';', (string) $response->header('Content-Type'))[0]));
 
-        if (! $response->ok()) {
-            throw new \RuntimeException("HTTP {$response->status()}");
+        if (! str_starts_with($contentType, 'image/') || $body === '' || @getimagesizefromstring($body) === false) {
+            throw new RuntimeException("File gambar tidak valid: {$url}");
         }
 
-        return $response->body();
-    }
+        $extension = $this->extensionFromContentType($contentType) ?? $this->extensionFromUrl($url) ?? 'jpg';
+        $filename = Str::slug($basename).'.'.$extension;
+        $finalPath = self::IMPORT_DIRECTORY.'/'.$filename;
 
-    /**
-     * @return array<string, string>
-     */
-    private function headers(): array
-    {
+        if ($writeFile && ! Storage::disk('public')->put($stagingDirectory.'/'.$filename, $body)) {
+            throw new RuntimeException("Tidak dapat menulis gambar staging: {$filename}");
+        }
+
+        $this->imageSuccessCount++;
+
         return [
-            'Accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
-            'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36',
+            'filename' => $filename,
+            'filepath' => 'storage/'.$finalPath,
+            'mimetype' => $contentType,
+            'size' => strlen($body),
+            'url' => '/storage/'.$finalPath,
         ];
     }
 
-    private function xpath(string $html): DOMXPath
+    private function cleanArticleHtml(string $html): string
     {
-        $document = new DOMDocument();
-        libxml_use_internal_errors(true);
-        $document->loadHTML('<?xml encoding="utf-8" ?>'.$html, LIBXML_NOERROR | LIBXML_NOWARNING);
-        libxml_clear_errors();
-
-        return new DOMXPath($document);
-    }
-
-    /**
-     * @param list<string> $queries
-     */
-    private function firstText(DOMXPath $xpath, array $queries): string
-    {
-        foreach ($queries as $query) {
-            $nodes = $xpath->query($query);
-            if (! $nodes || $nodes->length === 0) {
-                continue;
-            }
-
-            $node = $nodes->item(0);
-            $value = trim($node?->nodeValue ?? '');
-            if ($value !== '') {
-                return html_entity_decode($value, ENT_QUOTES | ENT_HTML5, 'UTF-8');
-            }
-        }
-
-        return '';
-    }
-
-    private function findContentNode(DOMXPath $xpath): ?DOMNode
-    {
-        $queries = [
-            '//article//*[contains(concat(" ", normalize-space(@class), " "), " lg:col-span-8 ")]',
-            '//article//*[contains(concat(" ", normalize-space(@class), " "), " prose ")]',
-            '//*[contains(@class, "entry-content")]',
-            '//*[contains(@class, "post-content")]',
-            '//*[contains(@class, "article-content")]',
-            '//*[contains(@class, "content-prose")]',
-            '//article[contains(@class, "post")]',
-            '//article',
-        ];
-
-        $bestNode = null;
-        $bestLength = 0;
-
-        foreach ($queries as $query) {
-            foreach ($xpath->query($query) ?: [] as $node) {
-                $textLength = mb_strlen(trim($node->textContent ?? ''));
-                if ($textLength > $bestLength) {
-                    $bestLength = $textLength;
-                    $bestNode = $node;
-                }
-            }
-        }
-
-        if ($bestLength > 80) {
-            return $bestNode;
-        }
-
-        $main = $xpath->query('//main')->item(0);
-
-        return $main && mb_strlen(trim($main->textContent ?? '')) > 80 ? $main : null;
-    }
-
-    private function sanitizeNode(DOMNode $node): void
-    {
-        $document = $node instanceof DOMDocument ? $node : $node->ownerDocument;
-        if (! $document) {
-            return;
-        }
-
+        $document = $this->document($html);
         $xpath = new DOMXPath($document);
+        $body = $document->getElementsByTagName('body')->item(0);
+
+        if (! $body) {
+            return '';
+        }
+
         foreach (['script', 'style', 'form', 'iframe', 'noscript', 'svg', 'nav', 'aside', 'header', 'footer'] as $tag) {
-            foreach ($xpath->query('.//'.$tag, $node) ?: [] as $blocked) {
-                $blocked->parentNode?->removeChild($blocked);
-            }
+            $this->removeNodes($xpath->query('.//'.$tag, $body));
         }
 
-        $chromeClassParts = [
-            'breadcrumb',
-            'sidebar',
-            'related',
-            'recent',
-            'share',
-            'author',
-            'comment',
-            'pagination',
-            'newsletter',
-            'toc',
-            'table-of-contents',
-        ];
-
-        foreach ($xpath->query('.//*[@class]', $node) ?: [] as $element) {
+        foreach ($xpath->query('.//*', $body) ?: [] as $element) {
             if (! $element instanceof DOMElement) {
                 continue;
             }
 
-            $className = strtolower($element->getAttribute('class'));
-            foreach ($chromeClassParts as $blockedClassPart) {
-                if (str_contains($className, $blockedClassPart)) {
-                    $element->parentNode?->removeChild($element);
-                    break;
-                }
+            $marker = strtolower($element->getAttribute('class').' '.$element->getAttribute('id'));
+            if (preg_match('/(?:^|[\s_-])(toc|table-of-contents|elementor-toc|breadcrumb|sidebar|related|share|author|comment|pagination|newsletter)(?:[\s_-]|$)/', $marker)) {
+                $element->parentNode?->removeChild($element);
             }
         }
 
-        foreach ($xpath->query('.//*', $node) ?: [] as $element) {
-            if (! $element instanceof DOMElement) {
-                continue;
-            }
-
-            $removeAttributes = [];
-            foreach ($element->attributes ?? [] as $attribute) {
-                $name = strtolower($attribute->name);
-                if (str_starts_with($name, 'on') || in_array($name, ['class', 'style', 'srcset', 'sizes'], true)) {
-                    $removeAttributes[] = $attribute->name;
-                }
-            }
-
-            foreach ($removeAttributes as $attributeName) {
-                $element->removeAttribute($attributeName);
-            }
-
-            if ($element->tagName === 'img') {
-                $lazySource = $element->getAttribute('data-src')
-                    ?: $element->getAttribute('data-lazy-src')
-                    ?: $element->getAttribute('data-original');
-
-                if ($lazySource !== '' && $element->getAttribute('src') === '') {
-                    $element->setAttribute('src', $lazySource);
-                }
-            }
-        }
+        return $this->innerHtml($body);
     }
 
-    private function removeDuplicateTitle(DOMNode $node, string $title): void
+    /** @return list<string> */
+    private function extractContentImages(string &$html): array
     {
-        $document = $node->ownerDocument;
-        if (! $document) {
-            return;
-        }
-
+        $document = $this->document($html);
         $xpath = new DOMXPath($document);
-        $normalizedTitle = Str::of($title)->lower()->squish()->toString();
+        $body = $document->getElementsByTagName('body')->item(0);
+        $urls = [];
 
-        foreach ($xpath->query('.//h1', $node) ?: [] as $heading) {
-            $headingTitle = Str::of($heading->textContent ?? '')->lower()->squish()->toString();
-            if ($headingTitle === $normalizedTitle || str_contains($headingTitle, $normalizedTitle)) {
-                $heading->parentNode?->removeChild($heading);
-                break;
-            }
-        }
-    }
-
-    private function removeLeadingFeaturedMedia(DOMNode $node): void
-    {
-        $document = $node->ownerDocument;
-        if (! $document) {
-            return;
-        }
-
-        $xpath = new DOMXPath($document);
-        foreach ($xpath->query('.//*[self::figure or self::img]', $node) ?: [] as $media) {
-            $hasEarlierBodyText = false;
-            $current = $media;
-
-            while ($current && $current !== $node) {
-                $sibling = $current->previousSibling;
-                while ($sibling) {
-                    if (trim($sibling->textContent ?? '') !== '') {
-                        $hasEarlierBodyText = true;
-                        break 2;
-                    }
-
-                    $sibling = $sibling->previousSibling;
-                }
-
-                $current = $current->parentNode;
-            }
-
-            if (! $hasEarlierBodyText) {
-                $media->parentNode?->removeChild($media);
-            }
-
-            break;
-        }
-    }
-
-    /**
-     * @return list<string>
-     */
-    private function extractImageUrls(DOMNode $node, string $baseUrl): array
-    {
-        $document = $node->ownerDocument;
-        if (! $document) {
+        if (! $body) {
             return [];
         }
 
-        $xpath = new DOMXPath($document);
-        $urls = [];
-
-        foreach ($xpath->query('.//img', $node) ?: [] as $image) {
+        foreach ($xpath->query('.//img', $body) ?: [] as $image) {
             if (! $image instanceof DOMElement) {
                 continue;
             }
-
-            $value = $image->getAttribute('src')
-                ?: $image->getAttribute('data-src')
+            $source = $image->getAttribute('data-src')
                 ?: $image->getAttribute('data-lazy-src')
-                ?: $image->getAttribute('data-original');
+                ?: $image->getAttribute('data-original')
+                ?: $image->getAttribute('src');
+            $absolute = $this->absoluteUrl($source);
+            if ($absolute === null) {
+                throw new RuntimeException('Elemen gambar artikel tidak memiliki URL HTTP yang dapat diunduh.');
+            }
+            $image->setAttribute('src', $absolute);
+            $urls[] = $absolute;
+        }
 
-            $absolute = $this->absoluteUrl($value, $baseUrl);
-            if ($absolute) {
-                $urls[] = $absolute;
-                $image->setAttribute('src', $absolute);
+        $html = $this->innerHtml($body);
+
+        return array_values(array_unique($urls));
+    }
+
+    /** @param array<string, bool> $knownSlugs */
+    private function rewriteArticleLinks(string $html, array $knownSlugs): string
+    {
+        $document = $this->document($html);
+        $xpath = new DOMXPath($document);
+        $body = $document->getElementsByTagName('body')->item(0);
+
+        if (! $body) {
+            return $html;
+        }
+
+        foreach ($xpath->query('.//a[@href]', $body) ?: [] as $anchor) {
+            if (! $anchor instanceof DOMElement) {
+                continue;
+            }
+            $href = html_entity_decode($anchor->getAttribute('href'), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+            $host = parse_url($href, PHP_URL_HOST);
+            if ($host !== null && $host !== 'pusattalilanyard.com' && $host !== 'www.pusattalilanyard.com') {
+                continue;
+            }
+            $path = trim((string) parse_url($href, PHP_URL_PATH), '/');
+            $segments = array_values(array_filter(explode('/', $path)));
+            $candidate = Str::slug((string) end($segments));
+            if ($candidate !== '' && isset($knownSlugs[$candidate])) {
+                $fragment = parse_url($href, PHP_URL_FRAGMENT);
+                $anchor->setAttribute('href', '/blog/'.$candidate.($fragment ? '#'.$fragment : ''));
             }
         }
 
-        return $urls;
+        return $this->innerHtml($body);
+    }
+
+    private function normalizeImageAttributes(string $html): string
+    {
+        $document = $this->document($html);
+        $xpath = new DOMXPath($document);
+        $body = $document->getElementsByTagName('body')->item(0);
+
+        if (! $body) {
+            return $html;
+        }
+
+        foreach ($xpath->query('.//img', $body) ?: [] as $image) {
+            if (! $image instanceof DOMElement) {
+                continue;
+            }
+            foreach (['srcset', 'sizes', 'data-src', 'data-lazy-src', 'data-original'] as $attribute) {
+                $image->removeAttribute($attribute);
+            }
+            $image->setAttribute('loading', 'lazy');
+            $image->setAttribute('decoding', 'async');
+        }
+
+        return $this->innerHtml($body);
+    }
+
+    /** @param list<array<string, mixed>> $articles */
+    private function validatePreparedArticles(array $articles): void
+    {
+        foreach ($articles as $article) {
+            if (trim(strip_tags((string) $article['content'])) === '') {
+                throw new RuntimeException('Konten hasil sanitasi kosong: '.$article['slug']);
+            }
+            foreach ($article['media'] as $media) {
+                if (! str_starts_with((string) $media['url'], '/storage/'.self::IMPORT_DIRECTORY.'/')) {
+                    throw new RuntimeException('URL media lokal tidak valid: '.$article['slug']);
+                }
+            }
+        }
+    }
+
+    private function mergeExistingFilesIntoStaging(string $stagingDirectory): void
+    {
+        $disk = Storage::disk('public');
+        foreach ($disk->files(self::IMPORT_DIRECTORY) as $file) {
+            $target = $stagingDirectory.'/'.basename($file);
+            if (! $disk->exists($target)) {
+                $disk->copy($file, $target);
+            }
+        }
+    }
+
+    private function swapImportDirectory(string $stagingDirectory, string $backupDirectory): void
+    {
+        $disk = Storage::disk('public');
+        if ($disk->files(self::IMPORT_DIRECTORY) !== []) {
+            $this->copyDirectory(self::IMPORT_DIRECTORY, $backupDirectory);
+            $disk->deleteDirectory(self::IMPORT_DIRECTORY);
+        }
+
+        try {
+            $this->copyDirectory($stagingDirectory, self::IMPORT_DIRECTORY);
+            $disk->deleteDirectory($stagingDirectory);
+        } catch (Throwable $exception) {
+            $this->restoreImportDirectory($backupDirectory);
+            throw new RuntimeException('Tidak dapat mengaktifkan folder gambar hasil import.');
+        }
+    }
+
+    private function restoreImportDirectory(string $backupDirectory): void
+    {
+        $disk = Storage::disk('public');
+        $disk->deleteDirectory(self::IMPORT_DIRECTORY);
+        if ($disk->files($backupDirectory) !== []) {
+            $this->copyDirectory($backupDirectory, self::IMPORT_DIRECTORY);
+            $disk->deleteDirectory($backupDirectory);
+        }
+    }
+
+    private function copyDirectory(string $source, string $destination): void
+    {
+        $disk = Storage::disk('public');
+        foreach ($disk->allFiles($source) as $file) {
+            $relative = ltrim(substr($file, strlen($source)), '/');
+            if (! $disk->put($destination.'/'.$relative, $disk->get($file))) {
+                throw new RuntimeException("Tidak dapat menyalin file {$file}.");
+            }
+        }
+    }
+
+    /** @param list<array<string, mixed>> $articles */
+    private function persistArticles(array $articles, bool $keepOld, int $authorId): void
+    {
+        DB::transaction(function () use ($articles, $keepOld, $authorId): void {
+            $category = Category::firstOrCreate(
+                ['slug' => 'artikel', 'type' => 'BLOG'],
+                ['name' => 'Artikel', 'description' => 'Artikel Pusat Tali Lanyard'],
+            );
+
+            if (! $keepOld) {
+                Comment::query()->whereIn('postId', Post::query()->select('id'))->delete();
+                Post::query()->delete();
+                Media::query()
+                    ->where('filepath', 'like', 'storage/'.self::IMPORT_DIRECTORY.'/%')
+                    ->orWhere('url', 'like', '/storage/'.self::IMPORT_DIRECTORY.'/%')
+                    ->delete();
+            }
+
+            foreach ($articles as $article) {
+                Post::updateOrCreate(
+                    ['slug' => $article['slug']],
+                    [
+                        'title' => $article['title'],
+                        'content' => $article['content'],
+                        'published' => true,
+                        'featuredImage' => $article['featuredImage'],
+                        'categoryId' => $category->id,
+                        'authorId' => $authorId,
+                        'tags' => $article['tags'],
+                        'createdAt' => $article['createdAt'],
+                        'updatedAt' => $article['updatedAt'],
+                        'metaTitle' => $article['metaTitle'],
+                        'metaDescription' => $article['metaDescription'],
+                    ],
+                );
+
+                foreach ($article['media'] as $media) {
+                    Media::updateOrCreate(['filepath' => $media['filepath']], $media);
+                }
+            }
+        });
+    }
+
+    private function get(string $url, array $query = []): Response
+    {
+        $response = Http::timeout(30)
+            ->retry(2, 350)
+            ->withHeaders([
+                'Accept' => 'application/json,text/html,image/avif,image/webp,*/*;q=0.8',
+                'User-Agent' => 'PusatTaliLanyardContentImporter/1.0',
+            ])
+            ->get($url, $query);
+
+        if (! $response->successful()) {
+            throw new RuntimeException("HTTP {$response->status()} saat mengambil {$url}");
+        }
+
+        return $response;
+    }
+
+    private function document(string $html): DOMDocument
+    {
+        $document = new DOMDocument();
+        $previous = libxml_use_internal_errors(true);
+        $document->loadHTML(
+            '<?xml encoding="utf-8" ?><!doctype html><html><body>'.$html.'</body></html>',
+            LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD,
+        );
+        libxml_clear_errors();
+        libxml_use_internal_errors($previous);
+
+        return $document;
     }
 
     private function innerHtml(DOMNode $node): string
@@ -620,110 +616,64 @@ class ImportPusatTaliLanyardBlog extends Command
         return trim($html);
     }
 
-    private function parseDate(string $value): ?Carbon
+    private function removeNodes(mixed $nodes): void
     {
-        if ($value === '') {
+        if (! $nodes) {
+            return;
+        }
+        foreach (iterator_to_array($nodes) as $node) {
+            $node->parentNode?->removeChild($node);
+        }
+    }
+
+    private function containsRemoteImage(string $html): bool
+    {
+        return preg_match('/<img\b[^>]+(?:src|srcset)=["\'][^"\']*https?:\/\//i', $html) === 1;
+    }
+
+    private function containsToc(string $html): bool
+    {
+        return preg_match('/(?:elementor-toc|table-of-contents|class=["\'][^"\']*\btoc\b|>\s*Daftar Isi\s*<)/i', $html) === 1;
+    }
+
+    private function absoluteUrl(string $url): ?string
+    {
+        $url = trim(html_entity_decode($url, ENT_QUOTES | ENT_HTML5, 'UTF-8'));
+        if ($url === '' || str_starts_with($url, 'data:')) {
             return null;
         }
+        if (str_starts_with($url, '//')) {
+            return 'https:'.$url;
+        }
+        if (preg_match('/^https?:\/\//i', $url)) {
+            return $url;
+        }
 
+        return self::BASE_URL.'/'.ltrim($url, '/');
+    }
+
+    private function parseDate(string $value): ?Carbon
+    {
         try {
-            return Carbon::parse($value);
+            return $value !== '' ? Carbon::parse($value) : null;
         } catch (Throwable) {
             return null;
         }
     }
 
-    private function slugFromUrl(string $url): ?string
+    private function decodeText(string $value): string
     {
-        $path = trim((string) parse_url($url, PHP_URL_PATH), '/');
-        $segments = array_values(array_filter(explode('/', $path)));
-        $slug = end($segments);
-
-        return $slug ? Str::slug($slug) : null;
-    }
-
-    private function isArticleUrl(string $url): bool
-    {
-        $path = trim((string) parse_url($url, PHP_URL_PATH), '/');
-        $segments = array_values(array_filter(explode('/', $path)));
-
-        if (count($segments) === 1) {
-            return ! in_array($segments[0], [
-                'blog',
-                'layanan',
-                'pengiriman',
-                'garansi',
-                'faq',
-                'kontak',
-                'tentang',
-                'category',
-                'media',
-                'build',
-                'storage',
-                'login',
-                'register',
-            ], true);
-        }
-
-        return count($segments) === 2
-            && $segments[0] === 'blog'
-            && ! in_array($segments[1], ['page', 'category', 'tag', 'author'], true);
-    }
-
-    private function isBlogListingUrl(string $url): bool
-    {
-        $path = trim((string) parse_url($url, PHP_URL_PATH), '/');
-
-        return $path === 'blog'
-            || str_starts_with($path, 'blog/page/')
-            || str_contains($url, '/blog?')
-            || str_contains($url, '/blog/?');
-    }
-
-    private function isSameHost(string $url): bool
-    {
-        return parse_url($url, PHP_URL_HOST) === 'pusattalilanyard.com';
-    }
-
-    private function normalizeUrl(string $url): string
-    {
-        return rtrim(strtok($url, '#') ?: $url, '/');
-    }
-
-    private function absoluteUrl(string $url, string $baseUrl): ?string
-    {
-        $url = trim(html_entity_decode($url, ENT_QUOTES | ENT_HTML5, 'UTF-8'));
-
-        if ($url === '' || str_starts_with($url, 'data:') || str_starts_with($url, 'mailto:') || str_starts_with($url, 'tel:')) {
-            return null;
-        }
-
-        if (str_starts_with($url, '//')) {
-            return 'https:'.$url;
-        }
-
-        if (preg_match('/^https?:\/\//i', $url)) {
-            return $this->normalizeUrl($url);
-        }
-
-        if (str_starts_with($url, '/')) {
-            return self::BASE_URL.$url;
-        }
-
-        $basePath = (string) parse_url($baseUrl, PHP_URL_PATH);
-        $directory = rtrim(str_replace('\\', '/', dirname($basePath)), '/');
-
-        return self::BASE_URL.($directory ? '/'.$directory : '').'/'.$url;
+        return trim(preg_replace('/\s+/u', ' ', html_entity_decode($value, ENT_QUOTES | ENT_HTML5, 'UTF-8')) ?? '');
     }
 
     private function extensionFromContentType(string $contentType): ?string
     {
-        return match (true) {
-            str_contains($contentType, 'webp') => 'webp',
-            str_contains($contentType, 'png') => 'png',
-            str_contains($contentType, 'gif') => 'gif',
-            str_contains($contentType, 'svg') => 'svg',
-            str_contains($contentType, 'jpeg'), str_contains($contentType, 'jpg') => 'jpg',
+        return match ($contentType) {
+            'image/jpeg' => 'jpg',
+            'image/png' => 'png',
+            'image/webp' => 'webp',
+            'image/gif' => 'gif',
+            'image/avif' => 'avif',
             default => null,
         };
     }
@@ -732,8 +682,19 @@ class ImportPusatTaliLanyardBlog extends Command
     {
         $extension = strtolower(pathinfo((string) parse_url($url, PHP_URL_PATH), PATHINFO_EXTENSION));
 
-        return in_array($extension, ['jpg', 'jpeg', 'png', 'webp', 'gif', 'svg'], true)
+        return in_array($extension, ['jpg', 'jpeg', 'png', 'webp', 'gif', 'avif'], true)
             ? ($extension === 'jpeg' ? 'jpg' : $extension)
             : null;
+    }
+
+    /** @param list<array<string, mixed>> $articles */
+    private function renderSummary(array $articles, bool $changed, bool $keepOld): void
+    {
+        $this->table(['Metric', 'Value'], [
+            ['Artikel valid', count($articles)],
+            ['Gambar tervalidasi', $this->imageSuccessCount],
+            ['Data diubah', $changed ? 'Ya' : 'Tidak'],
+            ['Mode replace', $keepOld ? 'Tidak (--keep-old)' : 'Ya'],
+        ]);
     }
 }

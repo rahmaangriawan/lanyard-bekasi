@@ -11,6 +11,7 @@ class ProductObserver
     {
         $cache = Cache::store(config('cache.public_store', 'file'));
         $cache->forget('home_products');
+        $cache->forget('home_response_html');
         $cache->forget('public_sitemap_products');
         $cache->put('seo_sitemap_dirty', true, now()->addDays(7));
     }

@@ -5,6 +5,7 @@
     $menuGroups = [
         'Utama' => [
             ['label' => 'Ringkasan', 'href' => route('dashboard'), 'icon' => 'dashboard', 'active' => request()->routeIs('dashboard')],
+            ['label' => 'Situs', 'href' => route('home'), 'icon' => 'site', 'active' => false, 'target' => '_blank'],
             ['label' => 'Analitik', 'href' => route('cms.analytics'), 'icon' => 'chart', 'active' => request()->routeIs('cms.analytics')],
         ],
         'Blog' => [
@@ -241,7 +242,12 @@
                 <ul class="sidebar__list">
                   @foreach($items as $item)
                     <li class="sidebar__item">
-                      <a class="sidebar__button {{ $item['active'] ? 'is-active' : '' }}" href="{{ $item['href'] }}" @if($item['active']) aria-current="page" @endif>
+                      <a
+                        class="sidebar__button {{ $item['active'] ? 'is-active' : '' }}"
+                        href="{{ $item['href'] }}"
+                        @if($item['active']) aria-current="page" @endif
+                        @if(isset($item['target'])) target="{{ $item['target'] }}" rel="noopener noreferrer" @endif
+                      >
                         @include('cms.partials.icon', ['name' => $item['icon']])
                         <span>{{ $item['label'] }}</span>
                       </a>

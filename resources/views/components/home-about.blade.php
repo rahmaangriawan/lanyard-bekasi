@@ -7,8 +7,9 @@
         <img
           src="/uploads/tentang-pusat-tali-lanyard.webp"
           alt="Beragam tali lanyard custom hasil produksi Pusat Tali Lanyard"
-          width="1025"
-          height="1536"
+          width="1000"
+          height="1080"
+          style="aspect-ratio: 1/1.08; width: 100%; height: 100%; object-fit: cover;"
           loading="lazy"
           decoding="async"
         />
@@ -36,6 +37,7 @@
           alt="Kolase pelanggan Pusat Tali Lanyard"
           width="762"
           height="246"
+          style="aspect-ratio: 762/246; width: 156px; height: auto;"
           loading="lazy"
           decoding="async"
         />

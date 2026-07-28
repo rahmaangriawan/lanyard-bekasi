@@ -14,4 +14,6 @@
 - FAQ homepage dan schema memakai satu sumber konfigurasi.
 - Sitemap index memuat `lastmod`; child sitemap kini menampilkan `changefreq` dengan benar.
 - URL publik dengan trailing slash dan parameter tracking dinormalisasi melalui redirect 301.
-
+- Upload JPG/PNG melalui Media Library otomatis disimpan sebagai WebP dan tetap menghasilkan varian responsif.
+- CSS/JS publik dibundel dan diminifikasi menjadi aset site serta homepage untuk mengurangi request jaringan.
+- Gambar publik memakai kebijakan lazy loading untuk konten non-kritis; font lokal memakai `font-display: swap`.

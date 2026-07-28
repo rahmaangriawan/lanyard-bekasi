@@ -35,6 +35,9 @@ class ProfileController extends Controller
             $previousSlug = $user->slug;
 
             $user->fill($request->validated());
+            if ($user instanceof MustVerifyEmail && $user->isDirty('email')) {
+                $user->email_verified_at = null;
+            }
             $nextSlug = AuthorProfile::nextSlug($user, $user->name);
             $user->slug = $nextSlug;
             $user->save();
@@ -52,7 +55,7 @@ class ProfileController extends Controller
             }
         });
 
-        return back()->with('success', 'Profil berhasil diperbarui.');
+        return Redirect::route('profile.edit')->with('success', 'Profil berhasil diperbarui.');
     }
 
     /**

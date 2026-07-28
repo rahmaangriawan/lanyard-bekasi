@@ -35,14 +35,10 @@
     $featuredImage = $siteUrl . '/uploads/pusat-tali-lanyard-logo.webp';
   }
 
-  $authorName = 'Rama Angriawan';
-  if (isset($post->author) && isset($post->author->name) && !empty($post->author->name)) {
-    $authorName = $post->author->name;
-    if (stripos($authorName, 'Admin') !== false || strtolower(trim($authorName)) === 'admin tes') {
-      $authorName = 'Rama Angriawan';
-    }
-  }
-  $authorSlug = \Illuminate\Support\Str::slug($authorName);
+  $authorName = isset($post->author) && !empty($post->author?->name)
+    ? $post->author->name
+    : 'Tim Pusat Tali Lanyard';
+  $authorSlug = $post->author?->slug ?: \Illuminate\Support\Str::slug($authorName);
 
   $datePub = null;
   $dateMod = null;
@@ -81,6 +77,17 @@
     ],
     'inLanguage' => 'id-ID',
   ];
+  $authorDescription = $post->author ? $post->author->bio : \App\Support\AuthorProfile::DEFAULT_BIO;
+  if (!empty($authorDescription)) {
+    $articleSchema['author']['description'] = $authorDescription;
+  }
+  if (!empty($post->author?->avatar)) {
+    $authorAvatarRaw = \App\Support\AssetUrl::relative($post->author->avatar);
+    $authorAvatar = str_starts_with((string) $authorAvatarRaw, 'http')
+      ? preg_replace('/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?/', $siteUrl, $authorAvatarRaw)
+      : $siteUrl . '/' . ltrim((string) $authorAvatarRaw, '/');
+    $articleSchema['author']['image'] = $authorAvatar;
+  }
   if ($datePub) $articleSchema['datePublished'] = $datePub;
   if ($dateMod) $articleSchema['dateModified'] = $dateMod;
 

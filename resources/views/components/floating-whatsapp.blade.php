@@ -18,6 +18,8 @@
     alt=""
     width="27"
     height="27"
+    loading="eager"
+    decoding="async"
     aria-hidden="true"
   />
 </a>

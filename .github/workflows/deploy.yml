@@ -1,0 +1,257 @@
+name: Deploy Pusat Tali Lanyard
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  PHP_VERSION: "8.3"
+  DEPLOY_PATH: ${{ vars.DEPLOY_PATH || '/home/pusattalilanyard/htdocs/pusattalilanyard.com' }}
+  PHP_BIN: ${{ vars.PHP_BIN || '/usr/bin/php8.3' }}
+  HEALTHCHECK_URL: ${{ vars.HEALTHCHECK_URL || 'https://pusattalilanyard.com/' }}
+
+jobs:
+  test-and-build:
+    name: Test and build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          extensions: dom, fileinfo, gd, mbstring, pdo_mysql
+          coverage: none
+
+      - name: Validate Composer files
+        run: composer validate --no-check-publish
+
+      - name: Install PHP dependencies
+        run: composer install --prefer-dist --no-progress --no-interaction
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Build production assets
+        run: npm run build
+
+      - name: Run application tests
+        env:
+          APP_ENV: testing
+          APP_KEY: base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+          DB_CONNECTION: sqlite
+          DB_DATABASE: ":memory:"
+          SESSION_DRIVER: array
+          CACHE_STORE: array
+          QUEUE_CONNECTION: sync
+        run: php artisan test
+
+      - name: Install production PHP dependencies
+        run: composer install --no-dev --prefer-dist --optimize-autoloader --no-progress --no-interaction
+
+      - name: Package application
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf deploy-package deploy.tar.gz
+          mkdir -p deploy-package
+
+          rsync -a ./ deploy-package/ \
+            --exclude '.git/' \
+            --exclude '.github/' \
+            --exclude '.env' \
+            --exclude '.env.*' \
+            --exclude 'deploy-package/' \
+            --exclude 'deploy.tar.gz' \
+            --exclude 'node_modules/' \
+            --exclude 'public/hot' \
+            --exclude 'public/storage' \
+            --exclude 'storage/logs/*' \
+            --exclude 'storage/framework/cache/*' \
+            --exclude 'storage/framework/sessions/*' \
+            --exclude 'storage/framework/views/*' \
+            --exclude 'tests/' \
+            --exclude '.phpunit.result.cache'
+
+          tar -czf deploy.tar.gz -C deploy-package .
+
+      - name: Upload deploy artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: production-package
+          path: deploy.tar.gz
+          if-no-files-found: error
+          retention-days: 3
+
+  deploy:
+    name: Deploy to CloudPanel
+    needs: test-and-build
+    runs-on: ubuntu-latest
+    environment: production
+    timeout-minutes: 15
+
+    steps:
+      - name: Download deploy artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: production-package
+
+      - name: Install SSH tooling
+        run: sudo apt-get update && sudo apt-get install -y sshpass
+
+      - name: Upload package
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_PORT: ${{ secrets.SSH_PORT }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_PASSWORD: ${{ secrets.SSH_PASSWORD }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          : "${SSH_HOST:?Missing SSH_HOST secret}"
+          : "${SSH_PORT:?Missing SSH_PORT secret}"
+          : "${SSH_USER:?Missing SSH_USER secret}"
+          : "${SSH_PASSWORD:?Missing SSH_PASSWORD secret}"
+
+          sshpass -p "$SSH_PASSWORD" scp \
+            -o StrictHostKeyChecking=accept-new \
+            -o ConnectTimeout=15 \
+            -P "$SSH_PORT" \
+            deploy.tar.gz \
+            "$SSH_USER@$SSH_HOST:deploy-pusattalilanyard.tar.gz"
+
+      - name: Install release
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_PORT: ${{ secrets.SSH_PORT }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_PASSWORD: ${{ secrets.SSH_PASSWORD }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          sshpass -p "$SSH_PASSWORD" ssh \
+            -o StrictHostKeyChecking=accept-new \
+            -o ConnectTimeout=15 \
+            -p "$SSH_PORT" \
+            "$SSH_USER@$SSH_HOST" \
+            bash -s -- "$DEPLOY_PATH" "$PHP_BIN" <<'REMOTE_SCRIPT'
+          set -euo pipefail
+
+          APP_DIR="$1"
+          PHP_BIN="$2"
+          ARCHIVE="$HOME/deploy-pusattalilanyard.tar.gz"
+          STAGING_DIR="$HOME/.deploy-pusattalilanyard-${GITHUB_RUN_ID:-manual}-$$"
+          MAINTENANCE_ACTIVE=0
+
+          cleanup() {
+            rm -rf "$STAGING_DIR"
+            rm -f "$ARCHIVE"
+            if [ "$MAINTENANCE_ACTIVE" -eq 1 ] && [ -f "$APP_DIR/artisan" ]; then
+              "$PHP_BIN" "$APP_DIR/artisan" up >/dev/null 2>&1 || true
+            fi
+          }
+          trap cleanup EXIT
+
+          test -x "$PHP_BIN"
+          test -f "$ARCHIVE"
+          mkdir -p "$STAGING_DIR" "$APP_DIR"
+          tar -xzf "$ARCHIVE" -C "$STAGING_DIR"
+
+          test -f "$STAGING_DIR/artisan"
+          test -f "$STAGING_DIR/vendor/autoload.php"
+          test -f "$STAGING_DIR/public/index.php"
+          test -d "$STAGING_DIR/public/build"
+
+          if [ ! -f "$APP_DIR/.env" ]; then
+            echo "ERROR: $APP_DIR/.env belum tersedia. Buat dari CloudPanel sebelum deploy." >&2
+            exit 1
+          fi
+
+          cd "$APP_DIR"
+          "$PHP_BIN" artisan down --retry=10 --refresh=15 || true
+          MAINTENANCE_ACTIVE=1
+
+          # Application code is replaced, while runtime data and CMS uploads
+          # remain on the server.
+          rsync -r --checksum --delete \
+            --no-times --no-perms --no-owner --no-group --omit-dir-times \
+            --exclude '.env' \
+            --exclude 'storage/' \
+            --exclude 'public/storage/' \
+            --exclude 'public/uploads/' \
+            "$STAGING_DIR/" "$APP_DIR/"
+
+          # Repository-owned seed images are copied without deleting uploads
+          # created through the production CMS.
+          if [ -d "$STAGING_DIR/public/uploads" ]; then
+            mkdir -p "$APP_DIR/public/uploads"
+            rsync -r --checksum \
+              --no-times --no-perms --no-owner --no-group --omit-dir-times \
+              "$STAGING_DIR/public/uploads/" "$APP_DIR/public/uploads/"
+          fi
+
+          if [ -d "$STAGING_DIR/storage/app/public/uploads/blog-import" ]; then
+            mkdir -p "$APP_DIR/storage/app/public/uploads/blog-import"
+            rsync -r --checksum \
+              --no-times --no-perms --no-owner --no-group --omit-dir-times \
+              "$STAGING_DIR/storage/app/public/uploads/blog-import/" \
+              "$APP_DIR/storage/app/public/uploads/blog-import/"
+          fi
+
+          cd "$APP_DIR"
+          mkdir -p \
+            storage/app/public \
+            storage/framework/cache/data \
+            storage/framework/sessions \
+            storage/framework/views \
+            storage/logs \
+            bootstrap/cache
+
+          "$PHP_BIN" artisan optimize:clear
+          "$PHP_BIN" artisan migrate --force --no-interaction
+          "$PHP_BIN" artisan storage:link --force
+          "$PHP_BIN" artisan optimize
+
+          chmod -R ug+rwX storage bootstrap/cache 2>/dev/null || true
+
+          test -f public/build/manifest.json
+          test -f public/uploads/hero-lanyard-slider-01.webp
+          test -f storage/app/public/uploads/blog-import/hook-jempol-lanyard-featured.webp
+
+          "$PHP_BIN" artisan up
+          MAINTENANCE_ACTIVE=0
+          echo "Deploy Pusat Tali Lanyard selesai: $(date --iso-8601=seconds)"
+          REMOTE_SCRIPT
+
+      - name: Verify production
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error \
+            --location \
+            --max-redirs 5 \
+            --retry 5 \
+            --retry-delay 5 \
+            --connect-timeout 10 \
+            --max-time 30 \
+            --output /dev/null \
+            "$HEALTHCHECK_URL"

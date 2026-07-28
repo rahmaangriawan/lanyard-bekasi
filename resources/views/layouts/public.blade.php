@@ -48,49 +48,25 @@
     <link rel="preload" href="/font-assets/geist-400" as="font" type="font/woff2" crossorigin>
     <link rel="preload" href="/font-assets/geist-700" as="font" type="font/woff2" crossorigin>
 
+    @if(request()->is('/'))
+    <link rel="preload" href="/uploads/hero-pusat-tali-lanyard-office.webp" as="image" fetchpriority="high">
+    @endif
+
     {{-- Bundled CSS: Tailwind + colors + global + header + hero + fonts (minified) --}}
     @php
         $publicCache = \Illuminate\Support\Facades\Cache::store(config('cache.public_store', 'file'));
-        $assetsVersion = $publicCache->remember('assets_version_hashes_v4', 86400, function () {
-            $appCssPath = public_path('css/app.min.css');
-            $srCssPath = public_path('vendor/scroll/scroll-reveal.css');
-            $srJsPath = public_path('vendor/scroll/scroll-reveal.js');
-            $publicSiteJsPath = public_path('js/public-site.js');
+        $assetsVersion = $publicCache->remember('assets_version_hashes_v5', 86400, function () {
+            $appCssPath = public_path('build/public/site.min.css');
+            $publicSiteJsPath = public_path('build/public/site.min.js');
             return [
                 'appCssV' => file_exists($appCssPath) ? filemtime($appCssPath) : 1,
-                'srCssV' => file_exists($srCssPath) ? filemtime($srCssPath) : 1,
-                'srJsV' => file_exists($srJsPath) ? filemtime($srJsPath) : 1,
                 'publicSiteJsV' => file_exists($publicSiteJsPath) ? filemtime($publicSiteJsPath) : 1,
             ];
         });
         $appCssV = $assetsVersion['appCssV'];
-        $headerCssPath = public_path('css/header.css');
-        $headerCssV = file_exists($headerCssPath) ? filemtime($headerCssPath) : 1;
-        $footerCssPath = public_path('css/footer.css');
-        $footerCssV = file_exists($footerCssPath) ? filemtime($footerCssPath) : 1;
-        $floatingWhatsappCssPath = public_path('css/floating-whatsapp.css');
-        $floatingWhatsappCssV = file_exists($floatingWhatsappCssPath) ? filemtime($floatingWhatsappCssPath) : 1;
-        $floatingWhatsappJsPath = public_path('js/floating-whatsapp.js');
-        $floatingWhatsappJsV = file_exists($floatingWhatsappJsPath) ? filemtime($floatingWhatsappJsPath) : 1;
-        $buttonMotionCssPath = public_path('css/button-motion.css');
-        $buttonMotionCssV = file_exists($buttonMotionCssPath) ? filemtime($buttonMotionCssPath) : 1;
-        $buttonMotionJsPath = public_path('js/button-motion.js');
-        $buttonMotionJsV = file_exists($buttonMotionJsPath) ? filemtime($buttonMotionJsPath) : 1;
-        $srCssV = $assetsVersion['srCssV'];
-        $srJsV = $assetsVersion['srJsV'];
         $publicSiteJsV = $assetsVersion['publicSiteJsV'];
-        $inlinePublicCss = $publicCache->remember(
-            'inline_public_css_v2_'.$appCssV.'_'.$srCssV,
-            86400,
-            fn () => (file_get_contents(public_path('css/app.min.css')) ?: '')
-                .(file_get_contents(public_path('vendor/scroll/scroll-reveal.css')) ?: '')
-        );
     @endphp
-    <style data-public-critical-css>{!! $inlinePublicCss !!}</style>
-    <link rel="stylesheet" href="/css/header.css?v={{ $headerCssV }}">
-    <link rel="stylesheet" href="/css/footer.css?v={{ $footerCssV }}">
-    <link rel="stylesheet" href="/css/floating-whatsapp.css?v={{ $floatingWhatsappCssV }}">
-    <link rel="stylesheet" href="/css/button-motion.css?v={{ $buttonMotionCssV }}">
+    <link rel="stylesheet" href="/build/public/site.min.css?v={{ $appCssV }}">
     {{-- Scroll Reveal — Mode A Vanilla Light --}}
 
     {{-- Legacy sections support: blog show pakai @section('head') untuk article CSS (harus tetap dirender) --}}
@@ -108,8 +84,115 @@
       /* Optimization: Lazy render offscreen sections — disable for first hero to allow reveal */
       .lazy-section { content-visibility: auto; contain-intrinsic-size: auto 500px; }
       #hero { content-visibility: visible; }
-      /* Pre-allocate logo space to prevent CLS */
-      .site-header__logo img { aspect-ratio: 600/223; object-fit: contain; }
+
+      /* Disable ALL layout transitions in header to prevent CLS */
+      .site-header,
+      .site-header *,
+      .site-header *::before,
+      .site-header *::after {
+        transition: none !important;
+        transition-duration: 0s !important;
+        animation-duration: 0s !important;
+      }
+
+      /* Force strict structural layouts for Header to prevent any CLS */
+      .site-header {
+        height: 76px !important;
+        min-height: 76px !important;
+      }
+      .site-header__logo {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        width: 118px !important;
+        height: 44px !important;
+        min-width: 118px !important;
+        flex: 0 0 118px !important;
+      }
+      .site-header__logo img {
+        aspect-ratio: 118/44 !important;
+        width: 118px !important;
+        height: 44px !important;
+        object-fit: contain !important;
+      }
+      .site-header__links {
+        display: flex !important; /* Force show in desktop immediately to prevent CLS */
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 4px !important;
+        min-width: 320px !important; /* Reserve enough space to absorb font-swap width differences */
+        flex: 1 1 auto !important;
+      }
+      .site-header__hamburger {
+        display: none !important; /* Hide by default in desktop to prevent app.min.css default flex layout shift */
+        width: 44px !important;
+        height: 44px !important;
+        flex: 0 0 44px !important;
+      }
+      .site-header__actions {
+        display: flex !important; /* Force show in desktop immediately to prevent CLS */
+        width: 146px !important;
+        height: 44px !important;
+        flex: 0 0 146px !important;
+        min-width: 146px !important;
+      }
+      .site-header__btn {
+        width: 146px !important;
+        height: 44px !important;
+        min-height: 44px !important;
+        padding: 0 !important;
+      }
+
+      /* Mobile Overrides (< 1023px) */
+      @media (max-width: 1023px) {
+        .site-header {
+          height: 72px !important;
+          min-height: 72px !important;
+        }
+        .site-header__logo {
+          width: 118px !important;
+          height: 44px !important;
+          min-width: 118px !important;
+          flex: 0 0 118px !important;
+        }
+        .site-header__logo img {
+          width: 118px !important;
+          height: 44px !important;
+        }
+        .site-header__links {
+          display: none !important; /* Hide links in mobile view */
+        }
+        .site-header__hamburger {
+          display: flex !important; /* Show hamburger only in mobile view */
+        }
+        .site-header__actions {
+          display: none !important;
+        }
+      }
+
+      #client-logos-section { min-height: 198px; }
+      .logo-marquee { min-height: 32px; }
+      /* Prevent Material Symbols text fallback layout shift */
+      .material-symbols-outlined {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center;
+        width: 24px;
+        height: 24px;
+        overflow: hidden;
+        font-size: 24px !important;
+        line-height: 1;
+        letter-spacing: normal;
+        text-transform: none;
+        white-space: nowrap;
+        word-wrap: normal;
+        direction: ltr;
+        -webkit-font-smoothing: antialiased;
+        vertical-align: middle;
+      }
+      /* Custom size overrides for specific icons to prevent scaling shift */
+      .ptl-hero__cta .material-symbols-outlined { width: 19px; height: 19px; font-size: 19px !important; }
+      .ptl-hero__trust .material-symbols-outlined { width: 20px; height: 20px; font-size: 20px !important; }
     </style>
 
     @stack('schema')
@@ -125,10 +208,7 @@
     <x-floating-whatsapp />
 
     @yield('scripts')
-    <script src="/js/public-site.js?v={{ $publicSiteJsV }}" defer></script>
-    <script src="/js/button-motion.js?v={{ $buttonMotionJsV }}" defer></script>
-    <script src="/js/floating-whatsapp.js?v={{ $floatingWhatsappJsV }}" defer></script>
+    <script src="/build/public/site.min.js?v={{ $publicSiteJsV }}" defer></script>
     {{-- Scroll Reveal Engine — Mode A --}}
-    <script src="/vendor/scroll/scroll-reveal.js?v={{ $srJsV }}" defer></script>
 </body>
 </html>

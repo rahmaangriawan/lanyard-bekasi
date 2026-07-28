@@ -21,17 +21,22 @@ class HandlePublicRedirects
             return $next($request);
         }
 
-        $canonicalRedirect = $this->canonicalRedirect($request, $sourcePath);
-        if ($canonicalRedirect !== null) {
-            return redirect()->away($canonicalRedirect, 301);
+        $target = PublicRedirectRegistry::target($sourcePath);
+        if ($target !== null) {
+            return redirect()->away(PublicRedirectUrl::destination($target, $request), 301);
         }
 
-        $target = PublicRedirectRegistry::target($sourcePath);
-        if ($target === null) {
+        $canonicalRedirect = $this->canonicalRedirect($request, $sourcePath);
+        if ($canonicalRedirect === null) {
             return $next($request);
         }
 
-        return redirect()->away(PublicRedirectUrl::destination($target, $request), 301);
+        $response = $next($request);
+        if ($response->getStatusCode() === 404) {
+            return $response;
+        }
+
+        return redirect()->away($canonicalRedirect, 301);
     }
 
     private function canonicalRedirect(Request $request, string $normalizedPath): ?string

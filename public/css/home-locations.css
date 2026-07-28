@@ -154,10 +154,14 @@
   }
 
   .home-locations__area {
+    flex-direction: column;
     min-height: 82px;
+    align-items: center;
+    justify-content: flex-start;
     gap: 10px;
     border-radius: 12px;
     padding: 13px;
+    text-align: center;
   }
 
   .home-locations__area:last-child {

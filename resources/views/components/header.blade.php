@@ -15,14 +15,16 @@
 <header class="site-header" id="site-header">
   <div class="site-header__surface">
     <nav class="site-header__nav" aria-label="Navigasi utama">
-      <a href="{{ route('home') }}" class="site-header__logo" aria-label="Pusat Tali Lanyard, kembali ke beranda">
+      <a href="{{ route('home') }}" class="site-header__logo" style="width: 118px; height: 44px; flex: 0 0 118px; min-width: 118px; display: inline-flex;" aria-label="Pusat Tali Lanyard, kembali ke beranda">
         <img
           src="/uploads/pusat-tali-lanyard-logo.webp"
           alt="Pusat Tali Lanyard"
           width="118"
           height="44"
+          style="width: 118px; height: 44px; aspect-ratio: 118/44; object-fit: contain;"
           loading="eager"
           fetchpriority="high"
+          decoding="async"
         />
       </a>
 
@@ -37,12 +39,13 @@
         @endforeach
       </div>
 
-      <div class="site-header__actions">
+      <div class="site-header__actions" style="width: 146px; height: 44px; flex: 0 0 146px; min-width: 146px; display: flex;">
         <a
           href="{{ $quotationUrl }}"
           target="_blank"
           rel="noopener noreferrer"
           class="site-header__btn site-header__btn--primary"
+          style="width: 146px; height: 44px; min-height: 44px; padding: 0; display: inline-flex;"
         >Minta Quotation</a>
       </div>
 

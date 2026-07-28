@@ -159,8 +159,8 @@
 
 @media (max-width: 640px) {
   .ptl-hero {
-    min-height: 100vh;
-    min-height: 100dvh;
+    min-height: calc(100vh - 72px);
+    min-height: calc(100dvh - 72px);
   }
 
   .ptl-hero__media {
@@ -175,8 +175,8 @@
 
   .ptl-hero__container {
     width: min(calc(100% - 32px), 1280px);
-    align-items: flex-end;
-    padding-block: 48px 56px;
+    align-items: center;
+    padding-block: clamp(36px, 6dvh, 52px);
   }
 
   .ptl-hero__title {

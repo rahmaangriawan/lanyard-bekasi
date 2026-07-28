@@ -15,10 +15,13 @@ use App\Models\Setting;
 use App\Models\User;
 use App\Support\PublicApi;
 use App\Support\ArticlePreview;
+use App\Support\SecureSettings;
+use App\Support\SettingKeyRegistry;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
@@ -337,10 +340,31 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('cms')->group(function () {
         'recentActivity' => Post::query()->latest('createdAt')->limit(5)->get(['id', 'title', 'slug', 'published', 'featuredImage', 'createdAt']),
     ]);
 
-    Route::get('/settings', fn () => ['success' => true, 'settings' => PublicApi::settings()]);
+    Route::get('/settings', fn () => [
+        'success' => true,
+        'settings' => SecureSettings::forPublic(
+            SecureSettings::getMany(SettingKeyRegistry::API_WRITABLE),
+        ),
+    ]);
     Route::post('/settings', function (Request $request) {
-        foreach ($request->all() as $key => $value) {
-            Setting::updateOrCreate(['key' => $key], ['value' => (string) $value]);
+        $validated = Validator::make(
+            ['settings' => $request->all()],
+            [
+                'settings' => ['required', 'array:'.implode(',', SettingKeyRegistry::API_WRITABLE)],
+                'settings.*' => ['nullable', 'string', 'max:65535'],
+            ],
+        )->validate()['settings'];
+
+        foreach ($validated as $key => $value) {
+            if (
+                SecureSettings::isSecret($key)
+                && (trim((string) $value) === '' || $value === '[configured]')
+                && SecureSettings::get($key) !== ''
+            ) {
+                continue;
+            }
+
+            SecureSettings::put($key, (string) $value);
         }
 
         return ['success' => true, 'message' => 'Settings updated successfully'];

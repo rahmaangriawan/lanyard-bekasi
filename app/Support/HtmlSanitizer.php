@@ -64,7 +64,7 @@ class HtmlSanitizer
         $previous = libxml_use_internal_errors(true);
 
         $document->loadHTML(
-            '<!doctype html><html><body>'.$html.'</body></html>',
+            '<?xml encoding="utf-8" ?><!doctype html><html><body>'.$html.'</body></html>',
             LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD
         );
         libxml_clear_errors();

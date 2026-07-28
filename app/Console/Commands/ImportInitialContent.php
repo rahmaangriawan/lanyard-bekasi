@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Models\User;
+use App\Support\AuthorProfile;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
@@ -19,8 +20,11 @@ class ImportInitialContent extends Command
         $publishedPosts = DB::table('post')->where('published', true)->count();
         $adminMarker = '.initial-admin-seeded';
 
-        if ($this->option('force') || ! Storage::disk('local')->exists($adminMarker)) {
-            $this->ensureInitialAdmin();
+        if (! AuthorProfile::primaryAuthor()) {
+            if (! $this->ensureInitialAdmin()) {
+                return self::FAILURE;
+            }
+
             Storage::disk('local')->put($adminMarker, now()->toIso8601String());
         }
 
@@ -47,25 +51,41 @@ class ImportInitialContent extends Command
         }
 
         DB::unprepared($sql);
+        $primaryAuthor = AuthorProfile::primaryAuthor();
+        if (! $primaryAuthor) {
+            $this->error('Initial content tidak dapat dihubungkan karena akun ADMIN tidak ditemukan.');
+
+            return self::FAILURE;
+        }
+        AuthorProfile::assignUnownedPosts($primaryAuthor);
         $this->info('Initial CMS content imported.');
 
         return self::SUCCESS;
     }
 
-    private function ensureInitialAdmin(): void
+    private function ensureInitialAdmin(): bool
     {
-        $email = (string) env('CMS_ADMIN_EMAIL', 'admin@tes.com');
-        $password = (string) env('CMS_ADMIN_PASSWORD', 'admin12345');
+        $email = trim((string) env('CMS_ADMIN_EMAIL'));
+        $password = (string) env('CMS_ADMIN_PASSWORD');
+
+        if ($email === '' || $password === '') {
+            $this->error('CMS_ADMIN_EMAIL dan CMS_ADMIN_PASSWORD wajib diisi saat membuat admin awal.');
+
+            return false;
+        }
 
         User::updateOrCreate(
             ['email' => $email],
             [
-                'name' => (string) env('CMS_ADMIN_NAME', 'Admin Tes'),
+                'name' => trim((string) env('CMS_ADMIN_NAME')) ?: 'Administrator',
                 'password' => Hash::make($password),
                 'role' => 'ADMIN',
+                'email_verified_at' => now(),
             ],
         );
 
         $this->line("Initial admin account is ready: {$email}");
+
+        return true;
     }
 }

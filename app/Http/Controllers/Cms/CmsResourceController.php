@@ -18,6 +18,7 @@ use App\Models\Setting;
 use App\Support\ArticlePreview;
 use App\Support\HtmlSanitizer;
 use App\Support\MediaThumbnail;
+use App\Support\MediaUpload;
 use App\Support\PublicRedirectUrl;
 use App\Support\SecureSettings;
 use Illuminate\Contracts\View\View;
@@ -492,21 +493,15 @@ class CmsResourceController extends Controller
     {
         $request->validate(['file' => ['required', 'file', 'mimes:jpg,jpeg,png,webp,gif,pdf', 'max:5120']]);
         $file = $request->file('file');
-        $path = $file->store('cms', 'public');
-
-        if (! is_string($path) || $path === '' || ! Storage::disk('public')->exists($path)) {
+        try {
+            $stored = MediaUpload::store($file);
+        } catch (\RuntimeException) {
             throw ValidationException::withMessages([
                 'file' => 'File gagal disimpan ke storage publik. Periksa izin folder storage lalu coba lagi.',
             ]);
         }
 
-        $media = Media::create([
-            'filename' => $file->getClientOriginalName(),
-            'filepath' => $path,
-            'mimetype' => $file->getMimeType() ?: 'application/octet-stream',
-            'size' => $file->getSize(),
-            'url' => Storage::disk('public')->url($path),
-        ]);
+        $media = Media::create($stored);
 
         MediaThumbnail::generate($media);
         MediaThumbnail::generateResponsive($media);

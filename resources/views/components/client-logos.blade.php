@@ -30,6 +30,7 @@
             alt="{{ $logo['alt'] }}"
             width="{{ $logo['w'] }}"
             height="{{ $logo['h'] }}"
+            style="aspect-ratio: {{ $logo['w'] }}/{{ $logo['h'] }}; width: auto; height: 32px;"
             class="logo-marquee__img"
             loading="lazy"
             decoding="async"

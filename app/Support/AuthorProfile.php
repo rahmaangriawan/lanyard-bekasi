@@ -3,12 +3,28 @@
 namespace App\Support;
 
 use App\Models\AuthorSlugRedirect;
+use App\Models\Post;
 use App\Models\User;
 use Illuminate\Support\Str;
 
 final class AuthorProfile
 {
     public const DEFAULT_BIO = 'Tim Pusat Tali Lanyard menulis panduan seputar lanyard custom, kebutuhan event, dan branding perusahaan.';
+
+    public static function primaryAuthor(): ?User
+    {
+        return User::query()
+            ->where('role', 'ADMIN')
+            ->orderBy('id')
+            ->first();
+    }
+
+    public static function assignUnownedPosts(User $author): int
+    {
+        return Post::query()
+            ->whereNull('authorId')
+            ->update(['authorId' => $author->id]);
+    }
 
     public static function nextSlug(User $user, string $name): string
     {
