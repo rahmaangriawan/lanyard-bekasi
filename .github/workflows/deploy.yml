@@ -232,7 +232,14 @@ jobs:
           "$PHP_BIN" artisan storage:link --force
           "$PHP_BIN" artisan optimize
 
-          chmod -R ug+rwX storage bootstrap/cache 2>/dev/null || true
+          # The deploy account may be root while PHP-FPM runs as the CloudPanel
+          # site user. Give that user ownership of Laravel's writable paths.
+          SITE_USER="$(basename "$(dirname "$(dirname "$APP_DIR")")")"
+          if [ "$(id -u)" -eq 0 ] && id "$SITE_USER" >/dev/null 2>&1; then
+            chown -R "$SITE_USER:$SITE_USER" storage bootstrap/cache
+          fi
+          chmod -R 775 storage bootstrap/cache
+          chmod 755 "$APP_DIR" "$APP_DIR/public"
 
           test -f public/build/manifest.json
           test -f public/uploads/hero-lanyard-slider-01.webp
@@ -251,8 +258,25 @@ jobs:
             --location \
             --max-redirs 5 \
             --retry 5 \
+            --retry-all-errors \
             --retry-delay 5 \
             --connect-timeout 10 \
             --max-time 30 \
             --output /dev/null \
             "$HEALTHCHECK_URL"
+
+      - name: Show Laravel error log
+        if: failure()
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_PORT: ${{ secrets.SSH_PORT }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_PASSWORD: ${{ secrets.SSH_PASSWORD }}
+        shell: bash
+        run: |
+          sshpass -p "$SSH_PASSWORD" ssh \
+            -o StrictHostKeyChecking=accept-new \
+            -o ConnectTimeout=15 \
+            -p "$SSH_PORT" \
+            "$SSH_USER@$SSH_HOST" \
+            "if [ -f '$DEPLOY_PATH/storage/logs/laravel.log' ]; then tail -n 120 '$DEPLOY_PATH/storage/logs/laravel.log'; else echo 'Laravel log is not available.'; fi"
