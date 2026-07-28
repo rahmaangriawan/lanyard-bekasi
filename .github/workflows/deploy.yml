@@ -108,7 +108,7 @@ jobs:
     environment: production
     timeout-minutes: 15
     env:
-      SSH_CONTROL_PATH: ${{ runner.temp }}/pusattalilanyard-ssh.sock
+      SSH_CONTROL_PATH: /tmp/pusattalilanyard-ssh.sock
 
     steps:
       - name: Download deploy artifact
