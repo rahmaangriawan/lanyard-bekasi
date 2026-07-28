@@ -226,6 +226,27 @@ jobs:
             storage/logs \
             bootstrap/cache
 
+          # Old runtime files may have been created by a different deploy or
+          # PHP-FPM user. Rotate only disposable runtime directories so the
+          # current site user can recreate them without requiring root access.
+          CURRENT_UID="$(id -u)"
+          reset_foreign_runtime_directory() {
+            target="$1"
+
+            if find "$target" -mindepth 1 ! -user "$CURRENT_UID" -print -quit | grep -q .; then
+              stale="${target}.deploy-stale-$(date +%s)-$$"
+              mv "$target" "$stale"
+              mkdir -p "$target"
+              chmod 775 "$target"
+              rm -rf "$stale" 2>/dev/null || true
+            fi
+          }
+
+          reset_foreign_runtime_directory storage/framework/cache/data
+          reset_foreign_runtime_directory storage/framework/sessions
+          reset_foreign_runtime_directory storage/framework/views
+          reset_foreign_runtime_directory storage/logs
+
           "$PHP_BIN" artisan optimize:clear
           "$PHP_BIN" artisan migrate --force --no-interaction
           "$PHP_BIN" artisan content:import-initial --no-interaction
@@ -238,7 +259,17 @@ jobs:
           if [ "$(id -u)" -eq 0 ] && id "$SITE_USER" >/dev/null 2>&1; then
             chown -R "$SITE_USER:$SITE_USER" storage bootstrap/cache
           fi
-          chmod -R 775 storage bootstrap/cache
+          chmod 775 \
+            storage \
+            storage/app \
+            storage/app/public \
+            storage/framework \
+            storage/framework/cache \
+            storage/framework/cache/data \
+            storage/framework/sessions \
+            storage/framework/views \
+            storage/logs \
+            bootstrap/cache
           chmod 755 "$APP_DIR" "$APP_DIR/public"
 
           test -f public/build/manifest.json
