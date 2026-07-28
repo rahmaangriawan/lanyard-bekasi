@@ -223,11 +223,12 @@
   <header class="page__header">
     <div class="page__headline">
       <h1 class="page__title">Media Library</h1>
-      <p class="page__description">Unggah, preview, salin URL, dan hapus aset visual untuk konten website.</p>
+      <p class="page__description">{{ $readOnly ? 'Lihat, preview, dan salin URL aset visual untuk konten website.' : 'Unggah, preview, salin URL, dan hapus aset visual untuk konten website.' }}</p>
     </div>
   </header>
 
   <div class="page__body">
+    @unless($readOnly)
     <section class="page__section">
       <form class="media-dropzone" method="post" action="{{ route('cms.store', 'media') }}" enctype="multipart/form-data" data-media-upload-form>
         @csrf
@@ -245,6 +246,7 @@
         </div>
       </form>
     </section>
+    @endunless
 
     <section class="page__section">
       <div class="card">
@@ -299,13 +301,15 @@
                     <a class="button button--sm button--outline button--neutral media-action-button" href="{{ $item->preview_url }}" target="_blank" rel="noopener" title="Buka file" aria-label="Buka {{ $item->filename }}">
                       <svg xmlns="http://www.w3.org/2000/svg" width="1.05em" height="1.05em" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M14 3h7v7h-2V6.41l-9.29 9.3l-1.42-1.42l9.3-9.29H14z"/><path fill="currentColor" d="M5 5h6v2H5v12h12v-6h2v6q0 .825-.587 1.413T17 21H5q-.825 0-1.412-.587T3 19V7q0-.825.588-1.412T5 5"/></svg>
                     </a>
-                    <form method="post" action="{{ route('cms.destroy', ['media', $item->id]) }}" onsubmit="return confirm('Hapus media ini?')">
-                      @csrf
-                      @method('DELETE')
-                      <button class="button button--sm button--outline button--danger media-action-button" type="submit" title="Hapus file" aria-label="Hapus {{ $item->filename }}">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="1.05em" height="1.05em" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M7 21q-.825 0-1.412-.587T5 19V6H4V4h5V3h6v1h5v2h-1v13q0 .825-.587 1.413T17 21zm2-4h2V8H9zm4 0h2V8h-2z"/></svg>
-                      </button>
-                    </form>
+                    @unless($readOnly)
+                      <form method="post" action="{{ route('cms.destroy', ['media', $item->id]) }}" onsubmit="return confirm('Hapus media ini?')">
+                        @csrf
+                        @method('DELETE')
+                        <button class="button button--sm button--outline button--danger media-action-button" type="submit" title="Hapus file" aria-label="Hapus {{ $item->filename }}">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="1.05em" height="1.05em" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M7 21q-.825 0-1.412-.587T5 19V6H4V4h5V3h6v1h5v2h-1v13q0 .825-.587 1.413T17 21zm2-4h2V8H9zm4 0h2V8h-2z"/></svg>
+                        </button>
+                      </form>
+                    @endunless
                   </div>
                 </div>
               </article>
@@ -365,6 +369,7 @@
 
 @push('scripts')
   <script>
+    @unless($readOnly)
     document.querySelectorAll('[data-media-upload-form]').forEach(function (form) {
       var input = form.querySelector('[data-media-file-input]');
 
@@ -400,6 +405,7 @@
         form.classList.add('is-uploading');
       });
     });
+    @endunless
 
     document.querySelectorAll('[data-copy-url]').forEach(function (button) {
       button.addEventListener('click', function () {

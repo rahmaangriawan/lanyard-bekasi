@@ -4,6 +4,7 @@ use App\Http\Controllers\Cms\CmsResourceController;
 use App\Http\Controllers\Cms\DashboardController;
 use App\Http\Controllers\Cms\ProductSyncController;
 use App\Http\Controllers\Cms\UtilityPageController;
+use App\Http\Controllers\Cms\WriterController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Models\AuthorSlugRedirect;
@@ -331,16 +332,34 @@ Route::get('/tag/{slug}', function (string $slug) {
 })->name('blog.tag');
 
 Route::get('/blog/penulis/{slug}', function (string $slug) {
-    $author = User::query()->where('slug', $slug)->first();
+    $aliasAuthor = null;
+    if ($slug === 'administrator') {
+        $primaryAuthor = \App\Support\AuthorProfile::primaryAuthor();
+        abort_unless($primaryAuthor, 404);
+
+        if ($primaryAuthor->slug && $primaryAuthor->slug !== 'administrator') {
+            return redirect('/blog/penulis/'.$primaryAuthor->slug, 301);
+        }
+
+        $aliasAuthor = $primaryAuthor;
+    }
+
+    $author = $aliasAuthor ?: User::query()
+        ->whereIn('role', [User::ROLE_ADMIN, User::ROLE_WRITER])
+        ->where('slug', $slug)
+        ->first();
 
     if (! $author) {
-        $redirect = AuthorSlugRedirect::query()->with('author')->where('slug', $slug)->first();
+        $redirect = AuthorSlugRedirect::query()
+            ->with(['author' => fn ($query) => $query->whereIn('role', [User::ROLE_ADMIN, User::ROLE_WRITER])])
+            ->where('slug', $slug)
+            ->first();
         abort_unless($redirect?->author, 404);
 
         return redirect('/blog/penulis/'.$redirect->author->slug, 301);
     }
 
-    $authorSlug = $author->slug ?: Str::slug($author->name);
+    $authorSlug = $author->slug ?: ($slug === 'administrator' ? 'administrator' : Str::slug($author->name));
     $posts = Post::query()
         ->with(['category', 'author'])
         ->where('published', true)
@@ -398,24 +417,46 @@ Route::post('/blog/{slug}/comments', function (Request $request, string $slug) {
         ->with('comment_sent', 'Komentar berhasil dikirim dan menunggu moderasi.');
 })->middleware('throttle:5,1')->name('blog.comment');
 
-Route::redirect('/dashboard', '/kawruh');
+Route::get('/dashboard', function (Request $request) {
+    if (! $request->user()) {
+        return redirect('/kawruh');
+    }
+
+    return redirect($request->user()->isWriter() ? '/kawruh/posts' : '/kawruh');
+});
 Route::get('/kawruh/login', fn () => redirect(Auth::check() ? '/dashboard' : '/login'));
 Route::redirect('/login/blackout', '/login');
 
-Route::middleware(['auth', 'verified', 'admin'])->prefix('kawruh')->group(function () {
-    Route::get('/', DashboardController::class)->name('dashboard');
-    Route::get('/analytics', [UtilityPageController::class, 'analytics'])->name('cms.analytics');
-    Route::get('/not-found-urls', [UtilityPageController::class, 'notFoundReport'])->name('cms.not-found-report');
-    Route::redirect('/blog', '/kawruh/posts');
-    Route::redirect('/categories-produk', '/kawruh/categories?type=PRODUCT');
-    Route::redirect('/categories-blog', '/kawruh/categories?type=BLOG');
-    Route::redirect('/cities', '/kawruh/city-pages');
-    Route::redirect('/komentar', '/kawruh/comments');
-    Route::redirect('/formulir', '/kawruh/inquiries');
-    Route::redirect('/portofolio', '/kawruh/portfolio');
+Route::middleware(['auth', 'verified', 'cms'])->prefix('kawruh')->group(function () {
+    Route::get('/', function (Request $request) {
+        if ($request->user()->isWriter()) {
+            return redirect('/kawruh/posts');
+        }
+
+        return app(DashboardController::class)();
+    })->name('dashboard');
     Route::get('/profile', [UtilityPageController::class, 'profile'])->name('cms.profile');
     Route::get('/media-picker', [CmsResourceController::class, 'mediaPicker'])->name('cms.media-picker');
-    Route::post('/products/sync', ProductSyncController::class)->name('cms.products.sync');
+
+    Route::middleware('admin')->group(function () {
+        Route::get('/analytics', [UtilityPageController::class, 'analytics'])->name('cms.analytics');
+        Route::get('/not-found-urls', [UtilityPageController::class, 'notFoundReport'])->name('cms.not-found-report');
+        Route::redirect('/blog', '/kawruh/posts');
+        Route::redirect('/categories-produk', '/kawruh/categories?type=PRODUCT');
+        Route::redirect('/categories-blog', '/kawruh/categories?type=BLOG');
+        Route::redirect('/cities', '/kawruh/city-pages');
+        Route::redirect('/komentar', '/kawruh/comments');
+        Route::redirect('/formulir', '/kawruh/inquiries');
+        Route::redirect('/portofolio', '/kawruh/portfolio');
+        Route::post('/products/sync', ProductSyncController::class)->name('cms.products.sync');
+        Route::get('/writers', [WriterController::class, 'index'])->name('cms.writers.index');
+        Route::get('/writers/create', [WriterController::class, 'create'])->name('cms.writers.create');
+        Route::post('/writers', [WriterController::class, 'store'])->name('cms.writers.store');
+        Route::get('/writers/{writer}/edit', [WriterController::class, 'edit'])->name('cms.writers.edit');
+        Route::patch('/writers/{writer}', [WriterController::class, 'update'])->name('cms.writers.update');
+        Route::delete('/writers/{writer}', [WriterController::class, 'destroy'])->name('cms.writers.destroy');
+    });
+
     Route::get('/{resource}', [CmsResourceController::class, 'index'])->name('cms.index');
     Route::get('/{resource}/create', [CmsResourceController::class, 'create'])->name('cms.create');
     Route::post('/{resource}/bulk', [CmsResourceController::class, 'bulk'])->name('cms.bulk');
@@ -426,7 +467,7 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('kawruh')->group(functi
     Route::post('/{resource}/{id}/toggle', [CmsResourceController::class, 'toggle'])->name('cms.toggle');
 });
 
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', 'cms'])->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');

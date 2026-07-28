@@ -83,6 +83,30 @@ class BlogAuthorProfileTest extends TestCase
             ->assertStatus(301);
     }
 
+    public function test_administrator_alias_redirects_to_the_primary_admin_active_slug(): void
+    {
+        $author = User::factory()->create([
+            'name' => 'Admin Utama',
+            'slug' => 'admin-utama',
+            'role' => User::ROLE_ADMIN,
+        ]);
+
+        $this->get('/blog/penulis/administrator')
+            ->assertStatus(301)
+            ->assertRedirect('/blog/penulis/admin-utama');
+
+        $this->actingAs($author)->patch('/profile', [
+            'name' => 'Nama Admin Baru',
+            'email' => $author->email,
+            'bio' => null,
+            'avatar' => null,
+        ])->assertSessionHasNoErrors();
+
+        $this->get('/blog/penulis/administrator')
+            ->assertStatus(301)
+            ->assertRedirect('/blog/penulis/nama-admin-baru');
+    }
+
     public function test_unowned_posts_can_be_backfilled_to_the_primary_admin(): void
     {
         $author = User::factory()->create(['role' => 'ADMIN']);

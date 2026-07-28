@@ -15,6 +15,7 @@ use App\Models\Post;
 use App\Models\Product;
 use App\Models\PublicRedirect;
 use App\Models\Setting;
+use App\Models\User;
 use App\Support\ArticlePreview;
 use App\Support\HtmlSanitizer;
 use App\Support\MediaThumbnail;
@@ -38,6 +39,7 @@ class CmsResourceController extends Controller
 {
     public function index(Request $request, string $resource): View
     {
+        $this->authorizeResource($request, $resource);
         $config = $this->config($resource);
 
         if ($resource === 'media') {
@@ -106,6 +108,7 @@ class CmsResourceController extends Controller
 
     public function create(Request $request, string $resource): View
     {
+        $this->authorizeResource($request, $resource, true);
         $config = $this->config($resource);
 
         return view('cms.form', [
@@ -126,6 +129,7 @@ class CmsResourceController extends Controller
 
     public function store(Request $request, string $resource): RedirectResponse|JsonResponse
     {
+        $this->authorizeResource($request, $resource, true);
         $config = $this->config($resource);
 
         if ($resource === 'settings') {
@@ -150,7 +154,9 @@ class CmsResourceController extends Controller
             }
         } else {
             if ($resource === 'posts') {
-                $data['authorId'] = $request->user()->id;
+                if (! $request->user()->isAdmin() || empty($data['authorId'])) {
+                    $data['authorId'] = $request->user()->id;
+                }
             }
 
             $config['model']::create($data);
@@ -161,8 +167,9 @@ class CmsResourceController extends Controller
             ->with('success', "{$config['singular']} berhasil dibuat.");
     }
 
-    public function edit(string $resource, int $id): View
+    public function edit(Request $request, string $resource, int $id): View
     {
+        $this->authorizeResource($request, $resource, true);
         $config = $this->config($resource);
         $item = $config['model']::query()->findOrFail($id);
 
@@ -178,6 +185,7 @@ class CmsResourceController extends Controller
 
     public function mediaPicker(Request $request): JsonResponse
     {
+        $this->authorizeResource($request, 'media');
         $perPage = max(1, min($request->integer('per_page') ?: 24, 48));
         $search = trim((string) $request->query('q', ''));
         $query = Media::query()->where('mimetype', 'like', 'image/%');
@@ -215,6 +223,7 @@ class CmsResourceController extends Controller
 
     public function update(Request $request, string $resource, int $id): RedirectResponse
     {
+        $this->authorizeResource($request, $resource, true);
         $config = $this->config($resource);
         $item = $config['model']::query()->findOrFail($id);
         $item->update($this->validated($request, $config, $item));
@@ -224,8 +233,9 @@ class CmsResourceController extends Controller
             ->with('success', "{$config['singular']} berhasil diperbarui.");
     }
 
-    public function destroy(string $resource, int $id): RedirectResponse
+    public function destroy(Request $request, string $resource, int $id): RedirectResponse
     {
+        $this->authorizeResource($request, $resource, true);
         $config = $this->config($resource);
         $item = $config['model']::query()->findOrFail($id);
 
@@ -245,6 +255,7 @@ class CmsResourceController extends Controller
 
     public function toggle(Request $request, string $resource, int $id): RedirectResponse
     {
+        $this->authorizeResource($request, $resource, true);
         $config = $this->config($resource);
         abort_unless(
             in_array('published', $config['fillable'], true)
@@ -271,6 +282,7 @@ class CmsResourceController extends Controller
 
     public function bulk(Request $request, string $resource): RedirectResponse
     {
+        $this->authorizeResource($request, $resource, true);
         $config = $this->config($resource);
         $validated = $request->validate([
             'selected' => ['required', 'array', 'min:1'],
@@ -373,6 +385,16 @@ class CmsResourceController extends Controller
 
             if ($name === 'slug') {
                 $rule[] = Rule::unique($config['table'], 'slug')->ignore($item?->getKey());
+            }
+
+            if ($name === 'authorId') {
+                $rule = [
+                    'nullable',
+                    'integer',
+                    Rule::exists('user', 'id')->where(
+                        fn ($query) => $query->whereIn('role', [User::ROLE_ADMIN, User::ROLE_WRITER])
+                    ),
+                ];
             }
 
             $rules[$name] = $rule;
@@ -547,6 +569,7 @@ class CmsResourceController extends Controller
             'stats' => (array) Media::query()->selectRaw(
                 "COUNT(*) AS `all`, SUM(CASE WHEN mimetype LIKE 'image/%' THEN 1 ELSE 0 END) AS image, SUM(CASE WHEN mimetype = 'application/pdf' THEN 1 ELSE 0 END) AS pdf"
             )->first()?->getAttributes(),
+            'readOnly' => ! $request->user()->canAccessCmsResource('media', true),
         ]);
     }
 
@@ -706,6 +729,17 @@ class CmsResourceController extends Controller
                 ->map(fn (CityPage $page) => ['value' => $page->id, 'label' => $page->title]);
         }
 
+        if (in_array('authors', $keys, true)) {
+            $options['authors'] = User::query()
+                ->whereIn('role', [User::ROLE_ADMIN, User::ROLE_WRITER])
+                ->orderBy('name')
+                ->get(['id', 'name', 'role'])
+                ->map(fn (User $author) => [
+                    'value' => $author->id,
+                    'label' => "{$author->name} ({$author->role})",
+                ]);
+        }
+
         return $options;
     }
 
@@ -771,18 +805,24 @@ class CmsResourceController extends Controller
                 'title' => 'Blog Posts',
                 'singular' => 'Artikel',
                 'description' => 'Kelola artikel blog, kategori, status publish, dan metadata SEO.',
-                'fillable' => ['title', 'slug', 'content', 'published', 'featuredImage', 'categoryId', 'metaTitle', 'metaDescription', 'createdAt'],
+                'fillable' => ['title', 'slug', 'content', 'published', 'featuredImage', 'categoryId', 'authorId', 'metaTitle', 'metaDescription', 'createdAt'],
                 'search' => ['title', 'slug', 'metaTitle'],
                 'sort' => ['createdAt', 'desc'],
                 'filters' => ['published'],
-                'with' => ['category'],
+                'with' => ['category', 'author'],
                 'columns' => [
                     ['key' => 'title', 'label' => 'Judul', 'primary' => true],
                     ['key' => 'category.name', 'label' => 'Kategori'],
+                    ['key' => 'author.name', 'label' => 'Penulis'],
                     ['key' => 'published', 'label' => 'Status', 'type' => 'boolean'],
                     ['key' => 'createdAt', 'label' => 'Dibuat', 'type' => 'date'],
                 ],
-                'fields' => $this->contentFields('title', true),
+                'fields' => array_merge(
+                    $this->contentFields('title', true),
+                    auth()->user()?->isAdmin()
+                        ? [['name' => 'authorId', 'label' => 'Penulis', 'type' => 'select', 'optionsKey' => 'authors']]
+                        : [],
+                ),
             ],
             'pages' => [
                 'key' => 'pages',
@@ -1152,5 +1192,10 @@ class CmsResourceController extends Controller
             ['name' => 'metaTitle', 'label' => 'Meta Title', 'type' => 'text'],
             ['name' => 'metaDescription', 'label' => 'Meta Description', 'type' => 'textarea'],
         ]);
+    }
+
+    private function authorizeResource(Request $request, string $resource, bool $mutating = false): void
+    {
+        abort_unless($request->user()?->canAccessCmsResource($resource, $mutating), 403);
     }
 }

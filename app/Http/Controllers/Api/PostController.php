@@ -4,20 +4,25 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Post;
+use App\Models\User;
 use App\Support\HtmlSanitizer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 class PostController extends Controller
 {
     public function index()
     {
-        return ['success' => true, 'posts' => Post::with('category:id,name,slug')->latest('updatedAt')->paginate(50)];
+        return ['success' => true, 'posts' => Post::with(['category:id,name,slug', 'author:id,name,slug'])->latest('updatedAt')->paginate(50)];
     }
 
     public function store(Request $request)
     {
         $data = $this->validated($request);
+        if (! $request->user()->isAdmin() || empty($data['authorId'])) {
+            $data['authorId'] = $request->user()->id;
+        }
         $post = Post::create($data);
 
         return response()->json(['success' => true, 'post' => $post], 201);
@@ -54,6 +59,13 @@ class PostController extends Controller
             'createdAt' => ['nullable', 'date'],
             'metaTitle' => ['nullable', 'string', 'max:255'],
             'metaDescription' => ['nullable', 'string'],
+            'authorId' => $request->user()?->isAdmin()
+                ? [
+                    'nullable',
+                    'integer',
+                    Rule::exists('user', 'id')->where(fn ($query) => $query->whereIn('role', [User::ROLE_ADMIN, User::ROLE_WRITER])),
+                ]
+                : ['prohibited'],
         ]);
 
         $data['slug'] = $data['slug'] ?? Str::slug($data['title']);

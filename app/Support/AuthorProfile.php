@@ -14,7 +14,7 @@ final class AuthorProfile
     public static function primaryAuthor(): ?User
     {
         return User::query()
-            ->where('role', 'ADMIN')
+            ->where('role', User::ROLE_ADMIN)
             ->orderBy('id')
             ->first();
     }
@@ -42,6 +42,10 @@ final class AuthorProfile
 
     public static function slugIsTaken(string $slug, User $user): bool
     {
+        if ($slug === 'administrator' && ! $user->isAdmin()) {
+            return true;
+        }
+
         return User::query()
             ->where('slug', $slug)
             ->whereKeyNot($user->getKey())

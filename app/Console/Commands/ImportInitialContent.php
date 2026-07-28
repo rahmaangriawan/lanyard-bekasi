@@ -28,8 +28,8 @@ class ImportInitialContent extends Command
 
             Storage::disk('local')->put($adminMarker, now()->toIso8601String());
             $primaryAuthor = AuthorProfile::primaryAuthor();
-        } elseif (! $this->syncConfiguredAdmin($primaryAuthor)) {
-            return self::FAILURE;
+        } else {
+            $this->line('Existing admin credentials preserved; environment bootstrap skipped.');
         }
 
         if (! $this->option('force') && $publishedPosts >= 6) {
@@ -79,59 +79,22 @@ class ImportInitialContent extends Command
             return false;
         }
 
-        User::updateOrCreate(
+        $admin = User::updateOrCreate(
             ['email' => $email],
             [
                 'name' => trim((string) env('CMS_ADMIN_NAME')) ?: 'Administrator',
                 'password' => Hash::make($password),
-                'role' => 'ADMIN',
+                'role' => User::ROLE_ADMIN,
                 'email_verified_at' => now(),
             ],
         );
 
+        if (! $admin->slug) {
+            $admin->slug = AuthorProfile::nextSlug($admin, $admin->name);
+            $admin->save();
+        }
+
         $this->line("Initial admin account is ready: {$email}");
-
-        return true;
-    }
-
-    private function syncConfiguredAdmin(User $admin): bool
-    {
-        $email = trim((string) env('CMS_ADMIN_EMAIL'));
-        $password = (string) env('CMS_ADMIN_PASSWORD');
-
-        if ($email === '' && $password === '') {
-            return true;
-        }
-
-        if ($email === '' || $password === '') {
-            $this->warn('Sinkronisasi admin dilewati: CMS_ADMIN_EMAIL dan CMS_ADMIN_PASSWORD harus diisi bersama.');
-
-            return true;
-        }
-
-        $emailBelongsToAnotherUser = User::query()
-            ->where('email', $email)
-            ->whereKeyNot($admin->getKey())
-            ->exists();
-
-        if ($emailBelongsToAnotherUser) {
-            $this->error('CMS_ADMIN_EMAIL sudah digunakan oleh akun lain.');
-
-            return false;
-        }
-
-        $changes = [
-            'email' => $email,
-            'role' => 'ADMIN',
-            'email_verified_at' => $admin->email_verified_at ?? now(),
-        ];
-
-        if (! Hash::check($password, $admin->password)) {
-            $changes['password'] = Hash::make($password);
-        }
-
-        $admin->forceFill($changes)->save();
-        $this->line("Admin credentials synchronized: {$email}");
 
         return true;
     }

@@ -5,6 +5,7 @@
 @php
     $isEdit = (bool) $item;
     $isSimpleForm = $resource === 'redirects';
+    $canUploadMedia = auth()->user()?->canAccessCmsResource('media', true) ?? false;
     $formAction = $isEdit ? route('cms.update', [$resource, $item->id]) : route('cms.store', $resource);
     $sidebarNames = ['published', 'approved', 'createdAt', 'categoryId', 'featuredImage', 'imageUrl', 'logoUrl', 'metaTitle', 'metaDescription'];
     $seoNames = ['metaTitle', 'metaDescription'];
@@ -847,18 +848,20 @@
         <div class="card__header">
           <div>
             <span class="card__title">Pilih Gambar</span>
-            <p class="mt-1 text-sm text-muted-foreground">Pilih dari Media Library, upload gambar baru, lalu gunakan untuk artikel atau featured image.</p>
+            <p class="mt-1 text-sm text-muted-foreground">{{ $canUploadMedia ? 'Pilih dari Media Library, upload gambar baru, lalu gunakan untuk artikel atau featured image.' : 'Pilih gambar yang sudah tersedia di Media Library.' }}</p>
           </div>
           <button class="button button--outline button--neutral ms-auto" type="button" data-close-media>Tutup</button>
         </div>
         <div class="card__body">
-          <label class="media-upload-dropzone" data-media-dropzone>
-            <input class="media-upload-dropzone__input" type="file" accept="image/*" data-media-upload />
-            <span>
-              <span class="media-upload-dropzone__title" data-media-dropzone-title>Klik atau drop gambar di sini</span>
-              <span class="media-upload-dropzone__hint">Gambar akan langsung diupload dan dipilih untuk konten.</span>
-            </span>
-          </label>
+          @if($canUploadMedia)
+            <label class="media-upload-dropzone" data-media-dropzone>
+              <input class="media-upload-dropzone__input" type="file" accept="image/*" data-media-upload />
+              <span>
+                <span class="media-upload-dropzone__title" data-media-dropzone-title>Klik atau drop gambar di sini</span>
+                <span class="media-upload-dropzone__hint">Gambar akan langsung diupload dan dipilih untuk konten.</span>
+              </span>
+            </label>
+          @endif
           <div class="media-library-gate" data-media-library-gate>
             <button class="button button--outline button--neutral" type="button" data-open-media-library>Buka Media Library</button>
           </div>

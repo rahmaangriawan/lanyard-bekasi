@@ -65,7 +65,46 @@ class SecurityHardeningTest extends TestCase
         $this->assertDatabaseCount('user', 0);
     }
 
-    public function test_initial_import_synchronizes_configured_existing_admin_credentials(): void
+    public function test_initial_import_bootstraps_admin_only_when_none_exists(): void
+    {
+        Storage::fake('local');
+        foreach (range(1, 6) as $index) {
+            Post::query()->create([
+                'title' => "Artikel {$index}",
+                'slug' => "artikel-bootstrap-{$index}",
+                'content' => '<p>Konten</p>',
+                'published' => true,
+            ]);
+        }
+
+        $previousName = getenv('CMS_ADMIN_NAME');
+        $previousEmail = getenv('CMS_ADMIN_EMAIL');
+        $previousPassword = getenv('CMS_ADMIN_PASSWORD');
+        putenv('CMS_ADMIN_NAME=Administrator');
+        putenv('CMS_ADMIN_EMAIL=bootstrap@example.com');
+        putenv('CMS_ADMIN_PASSWORD=bootstrap-password');
+        $_ENV['CMS_ADMIN_NAME'] = $_SERVER['CMS_ADMIN_NAME'] = 'Administrator';
+        $_ENV['CMS_ADMIN_EMAIL'] = $_SERVER['CMS_ADMIN_EMAIL'] = 'bootstrap@example.com';
+        $_ENV['CMS_ADMIN_PASSWORD'] = $_SERVER['CMS_ADMIN_PASSWORD'] = 'bootstrap-password';
+
+        try {
+            $this->artisan('content:import-initial')
+                ->expectsOutput('Initial admin account is ready: bootstrap@example.com')
+                ->expectsOutput('Initial public content already exists; import skipped.')
+                ->assertSuccessful();
+        } finally {
+            $this->restoreEnvironmentVariable('CMS_ADMIN_NAME', $previousName);
+            $this->restoreEnvironmentVariable('CMS_ADMIN_EMAIL', $previousEmail);
+            $this->restoreEnvironmentVariable('CMS_ADMIN_PASSWORD', $previousPassword);
+        }
+
+        $admin = User::query()->firstOrFail();
+        $this->assertSame(User::ROLE_ADMIN, $admin->role);
+        $this->assertSame('administrator', $admin->slug);
+        $this->assertTrue(Hash::check('bootstrap-password', $admin->password));
+    }
+
+    public function test_initial_import_preserves_existing_admin_credentials(): void
     {
         Storage::fake('local');
 
@@ -95,7 +134,7 @@ class SecurityHardeningTest extends TestCase
 
         try {
             $this->artisan('content:import-initial')
-                ->expectsOutput('Admin credentials synchronized: admin@example.com')
+                ->expectsOutput('Existing admin credentials preserved; environment bootstrap skipped.')
                 ->expectsOutput('Initial public content already exists; import skipped.')
                 ->assertSuccessful();
         } finally {
@@ -106,8 +145,9 @@ class SecurityHardeningTest extends TestCase
         $admin->refresh();
 
         $this->assertSame('Nama dari Profil', $admin->name);
-        $this->assertSame('admin@example.com', $admin->email);
-        $this->assertTrue(Hash::check('new-secure-password', $admin->password));
+        $this->assertSame('old@example.com', $admin->email);
+        $this->assertTrue(Hash::check('old-password', $admin->password));
+        $this->assertFalse(Hash::check('new-secure-password', $admin->password));
     }
 
     public function test_failed_login_uses_indonesian_message(): void

@@ -89,6 +89,7 @@ Route::get('/sitemap', function () {
                 ->orderByDesc('updatedAt')
                 ->get(['slug', 'updatedAt']),
             'authors' => User::query()
+                ->whereIn('role', [User::ROLE_ADMIN, User::ROLE_WRITER])
                 ->whereNotNull('slug')
                 ->whereHas('posts', fn ($query) => $query->where('published', true))
                 ->orderBy('name')
@@ -200,8 +201,28 @@ Route::get('/posts', function (Request $request) {
 });
 
 Route::get('/authors/{slug}', function (string $slug, Request $request) {
-    $author = User::query()
+    $aliasAuthor = null;
+    if ($slug === 'administrator') {
+        $primaryAuthor = \App\Support\AuthorProfile::primaryAuthor();
+        abort_unless($primaryAuthor, 404);
+
+        if ($primaryAuthor->slug && $primaryAuthor->slug !== 'administrator') {
+            return PublicApi::noStoreJson([
+                'success' => true,
+                'author' => null,
+                'posts' => [],
+                'redirectTo' => "/blog/penulis/{$primaryAuthor->slug}",
+            ]);
+        }
+
+        $aliasAuthor = User::query()
+            ->select(['id', 'name', 'slug', 'bio', 'avatar', 'updatedAt'])
+            ->findOrFail($primaryAuthor->id);
+    }
+
+    $author = $aliasAuthor ?: User::query()
         ->select(['id', 'name', 'slug', 'bio', 'avatar', 'updatedAt'])
+        ->whereIn('role', [User::ROLE_ADMIN, User::ROLE_WRITER])
         ->where('slug', $slug)
         ->first();
 
@@ -216,7 +237,7 @@ Route::get('/authors/{slug}', function (string $slug, Request $request) {
                 'success' => true,
                 'author' => null,
                 'posts' => [],
-                'redirectTo' => "/penulis/{$redirect->author->slug}",
+                'redirectTo' => "/blog/penulis/{$redirect->author->slug}",
             ]);
         }
 
@@ -327,6 +348,12 @@ Route::post('/inquiries', function (Request $request) {
     return response()->json(['success' => true, 'inquiry' => $inquiry], 201);
 })->middleware('throttle:3,5');
 
+Route::middleware(['auth:sanctum', 'cms'])->prefix('cms')->group(function () {
+    Route::apiResource('/posts', \App\Http\Controllers\Api\PostController::class);
+    Route::apiResource('/pages', \App\Http\Controllers\Api\PageController::class);
+    Route::get('/media', fn () => ['success' => true, 'mediaList' => Media::latest('createdAt')->paginate(24)]);
+});
+
 Route::middleware(['auth:sanctum', 'admin'])->prefix('cms')->group(function () {
     Route::get('/stats', fn () => [
         'success' => true,
@@ -371,8 +398,6 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('cms')->group(function () {
     });
 
     Route::apiResource('/categories', \App\Http\Controllers\Api\CategoryController::class)->except(['show']);
-    Route::apiResource('/posts', \App\Http\Controllers\Api\PostController::class);
-    Route::apiResource('/pages', \App\Http\Controllers\Api\PageController::class);
     Route::apiResource('/cities', \App\Http\Controllers\Api\CityPageController::class);
     Route::apiResource('/portofolio', \App\Http\Controllers\Api\PortfolioController::class)->except(['show']);
 
@@ -395,7 +420,6 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('cms')->group(function () {
     });
     Route::delete('/comments/{comment}', fn (Comment $comment) => tap(['success' => true], fn () => $comment->delete()));
 
-    Route::get('/media', fn () => ['success' => true, 'mediaList' => Media::latest('createdAt')->paginate(24)]);
     Route::post('/media', function (Request $request) {
         $request->validate(['file' => ['required', 'image', 'mimes:jpg,jpeg,png,webp,gif', 'max:8192']]);
         $file = $request->file('file');

@@ -17,6 +17,8 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public const CREATED_AT = 'createdAt';
     public const UPDATED_AT = 'updatedAt';
+    public const ROLE_ADMIN = 'ADMIN';
+    public const ROLE_WRITER = 'WRITER';
 
     protected $table = 'user';
 
@@ -73,7 +75,34 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public function isAdmin(): bool
     {
-        return $this->role === 'ADMIN';
+        return $this->role === self::ROLE_ADMIN;
+    }
+
+    public function isWriter(): bool
+    {
+        return $this->role === self::ROLE_WRITER;
+    }
+
+    public function canAccessCms(): bool
+    {
+        return $this->isAdmin() || $this->isWriter();
+    }
+
+    public function canAccessCmsResource(string $resource, bool $mutating = false): bool
+    {
+        if ($this->isAdmin()) {
+            return true;
+        }
+
+        if (! $this->isWriter()) {
+            return false;
+        }
+
+        if (in_array($resource, ['posts', 'pages'], true)) {
+            return true;
+        }
+
+        return $resource === 'media' && ! $mutating;
     }
 
     public function getAvatarAttribute(?string $value): ?string

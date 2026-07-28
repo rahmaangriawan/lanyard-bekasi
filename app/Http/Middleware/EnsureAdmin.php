@@ -11,7 +11,7 @@ class EnsureAdmin
     public function handle(Request $request, Closure $next): Response
     {
         if (! $request->user()?->isAdmin()) {
-            return response()->json(['error' => 'Unauthorized'], 401);
+            abort(403);
         }
 
         return $next($request);

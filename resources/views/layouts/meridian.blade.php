@@ -2,7 +2,7 @@
     $user = auth()->user();
     $resource = request()->route('resource');
     $categoryType = request('type');
-    $menuGroups = [
+    $adminMenuGroups = [
         'Utama' => [
             ['label' => 'Ringkasan', 'href' => route('dashboard'), 'icon' => 'dashboard', 'active' => request()->routeIs('dashboard')],
             ['label' => 'Situs', 'href' => route('home'), 'icon' => 'site', 'active' => false, 'target' => '_blank'],
@@ -10,6 +10,7 @@
         ],
         'Blog' => [
             ['label' => 'Pos', 'href' => route('cms.index', 'posts'), 'icon' => 'file', 'active' => $resource === 'posts'],
+            ['label' => 'Penulis', 'href' => route('cms.writers.index'), 'icon' => 'file', 'active' => request()->routeIs('cms.writers.*')],
             ['label' => 'Kategori Blog', 'href' => route('cms.index', 'categories') . '?type=BLOG', 'icon' => 'file', 'active' => $resource === 'categories' && $categoryType !== 'PRODUCT'],
             ['label' => 'Halaman', 'href' => route('cms.index', 'pages'), 'icon' => 'file', 'active' => $resource === 'pages'],
             ['label' => 'Generator Kota', 'href' => route('cms.index', 'city-pages'), 'icon' => 'chart', 'active' => $resource === 'city-pages'],
@@ -32,6 +33,20 @@
             ['label' => 'Profil Saya', 'href' => route('cms.profile'), 'icon' => 'file', 'active' => request()->routeIs('cms.profile')],
         ],
     ];
+    $writerMenuGroups = [
+        'Utama' => [
+            ['label' => 'Situs', 'href' => route('home'), 'icon' => 'site', 'active' => false, 'target' => '_blank'],
+        ],
+        'Konten' => [
+            ['label' => 'Pos', 'href' => route('cms.index', 'posts'), 'icon' => 'file', 'active' => $resource === 'posts'],
+            ['label' => 'Halaman', 'href' => route('cms.index', 'pages'), 'icon' => 'file', 'active' => $resource === 'pages'],
+        ],
+        'Akun & Media' => [
+            ['label' => 'Media Library', 'href' => route('cms.index', 'media'), 'icon' => 'media', 'active' => $resource === 'media'],
+            ['label' => 'Profil Saya', 'href' => route('cms.profile'), 'icon' => 'file', 'active' => request()->routeIs('cms.profile')],
+        ],
+    ];
+    $menuGroups = $user?->isWriter() ? $writerMenuGroups : $adminMenuGroups;
 @endphp
 
 <!doctype html>
