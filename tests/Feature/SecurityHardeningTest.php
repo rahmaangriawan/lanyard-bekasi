@@ -140,6 +140,14 @@ class SecurityHardeningTest extends TestCase
             'upgrade-insecure-requests',
             (string) $response->headers->get('Content-Security-Policy'),
         );
+        $this->assertStringContainsString(
+            'https://static.cloudflareinsights.com',
+            (string) $response->headers->get('Content-Security-Policy'),
+        );
+        $this->assertStringContainsString(
+            'https://cloudflareinsights.com',
+            (string) $response->headers->get('Content-Security-Policy'),
+        );
     }
 
     public function test_hsts_is_sent_only_for_production_https_requests(): void
