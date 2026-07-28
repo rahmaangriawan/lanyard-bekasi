@@ -3,9 +3,11 @@
 namespace Tests\Feature;
 
 use App\Models\Setting;
+use App\Models\Post;
 use App\Models\User;
 use App\Support\SecureSettings;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
@@ -61,6 +63,67 @@ class SecurityHardeningTest extends TestCase
             ->assertFailed();
 
         $this->assertDatabaseCount('user', 0);
+    }
+
+    public function test_initial_import_synchronizes_configured_existing_admin_credentials(): void
+    {
+        Storage::fake('local');
+
+        $admin = User::factory()->create([
+            'name' => 'Nama dari Profil',
+            'email' => 'old@example.com',
+            'password' => 'old-password',
+            'role' => 'ADMIN',
+        ]);
+
+        foreach (range(1, 6) as $index) {
+            Post::query()->create([
+                'title' => "Artikel {$index}",
+                'slug' => "artikel-{$index}",
+                'content' => '<p>Konten</p>',
+                'published' => true,
+            ]);
+        }
+
+        $previousEmail = getenv('CMS_ADMIN_EMAIL');
+        $previousPassword = getenv('CMS_ADMIN_PASSWORD');
+
+        putenv('CMS_ADMIN_EMAIL=admin@example.com');
+        putenv('CMS_ADMIN_PASSWORD=new-secure-password');
+        $_ENV['CMS_ADMIN_EMAIL'] = $_SERVER['CMS_ADMIN_EMAIL'] = 'admin@example.com';
+        $_ENV['CMS_ADMIN_PASSWORD'] = $_SERVER['CMS_ADMIN_PASSWORD'] = 'new-secure-password';
+
+        try {
+            $this->artisan('content:import-initial')
+                ->expectsOutput('Admin credentials synchronized: admin@example.com')
+                ->expectsOutput('Initial public content already exists; import skipped.')
+                ->assertSuccessful();
+        } finally {
+            $this->restoreEnvironmentVariable('CMS_ADMIN_EMAIL', $previousEmail);
+            $this->restoreEnvironmentVariable('CMS_ADMIN_PASSWORD', $previousPassword);
+        }
+
+        $admin->refresh();
+
+        $this->assertSame('Nama dari Profil', $admin->name);
+        $this->assertSame('admin@example.com', $admin->email);
+        $this->assertTrue(Hash::check('new-secure-password', $admin->password));
+    }
+
+    public function test_failed_login_uses_indonesian_message(): void
+    {
+        User::factory()->create([
+            'email' => 'admin@example.com',
+            'password' => 'correct-password',
+            'role' => 'ADMIN',
+        ]);
+
+        $this->post('/login', [
+            'email' => 'admin@example.com',
+            'password' => 'wrong-password',
+        ])->assertSessionHasErrors([
+            'email' => 'Email atau kata sandi yang Anda masukkan tidak sesuai.',
+        ]);
     }
 
     public function test_security_headers_include_csp_but_not_hsts_over_local_http(): void
@@ -167,5 +230,18 @@ class SecurityHardeningTest extends TestCase
             ->assertSee('Situs')
             ->assertSee('target="_blank"', false)
             ->assertSee('rel="noopener noreferrer"', false);
+    }
+
+    private function restoreEnvironmentVariable(string $key, string|false $value): void
+    {
+        if ($value === false) {
+            putenv($key);
+            unset($_ENV[$key], $_SERVER[$key]);
+
+            return;
+        }
+
+        putenv("{$key}={$value}");
+        $_ENV[$key] = $_SERVER[$key] = $value;
     }
 }
