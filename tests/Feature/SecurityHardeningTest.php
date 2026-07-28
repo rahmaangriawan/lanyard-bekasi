@@ -282,6 +282,81 @@ class SecurityHardeningTest extends TestCase
             ->assertSee('rel="noopener noreferrer"', false);
     }
 
+    public function test_cms_sidebar_places_writers_before_not_found_report(): void
+    {
+        $admin = User::factory()->create(['role' => 'ADMIN']);
+
+        $this->actingAs($admin)
+            ->get('/kawruh/settings')
+            ->assertOk()
+            ->assertSeeInOrder([
+                route('cms.writers.index'),
+                route('cms.not-found-report'),
+            ], false);
+    }
+
+    public function test_cms_settings_form_saves_and_masks_turnstile_secret(): void
+    {
+        $admin = User::factory()->create(['role' => 'ADMIN']);
+
+        $this->actingAs($admin)
+            ->post('/kawruh/settings', [
+                'settings' => [
+                    'turnstile_homepage_enabled' => 'false',
+                    'turnstile_login_enabled' => 'true',
+                    'turnstile_site_key' => 'dashboard-site-key',
+                    'turnstile_secret_key' => 'dashboard-secret-key',
+                ],
+            ])
+            ->assertRedirect('/kawruh/settings')
+            ->assertSessionHasNoErrors();
+
+        $this->assertSame('dashboard-secret-key', SecureSettings::get('turnstile_secret_key'));
+        $this->assertNotSame(
+            'dashboard-secret-key',
+            Setting::query()->where('key', 'turnstile_secret_key')->value('value'),
+        );
+
+        $this->actingAs($admin)
+            ->get('/kawruh/settings')
+            ->assertOk()
+            ->assertSee('Secret aktif tersimpan terenkripsi')
+            ->assertDontSee('dashboard-secret-key', false);
+
+        $this->post('/logout')->assertRedirect('/');
+
+        $this->get('/login')
+            ->assertOk()
+            ->assertSee('cf-turnstile', false)
+            ->assertSee('dashboard-site-key', false)
+            ->assertDontSee('dashboard-secret-key', false);
+    }
+
+    public function test_cms_rejects_enabled_turnstile_without_a_readable_secret(): void
+    {
+        $admin = User::factory()->create(['role' => 'ADMIN']);
+        Setting::query()->create([
+            'key' => 'turnstile_secret_key',
+            'value' => 'enc:v1:not-readable-with-current-app-key',
+        ]);
+
+        $this->actingAs($admin)
+            ->post('/kawruh/settings', [
+                'settings' => [
+                    'turnstile_homepage_enabled' => 'false',
+                    'turnstile_login_enabled' => 'true',
+                    'turnstile_site_key' => 'dashboard-site-key',
+                    'turnstile_secret_key' => '',
+                ],
+            ])
+            ->assertSessionHasErrors('settings.turnstile_secret_key');
+
+        $this->actingAs($admin)
+            ->get('/kawruh/settings')
+            ->assertOk()
+            ->assertSee('Secret lama tidak dapat dibaca');
+    }
+
     private function restoreEnvironmentVariable(string $key, string|false $value): void
     {
         if ($value === false) {

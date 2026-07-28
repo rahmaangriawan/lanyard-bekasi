@@ -136,6 +136,41 @@
       padding: 1rem 1.05rem;
       line-height: 1.65;
     }
+    .settings-secret-field {
+      position: relative;
+    }
+    .settings-secret-field .input {
+      padding-right: 5.75rem;
+    }
+    .settings-secret-toggle {
+      position: absolute;
+      top: 50%;
+      right: .65rem;
+      min-height: 2.15rem;
+      padding: .35rem .7rem;
+      border: 0;
+      border-radius: .6rem;
+      transform: translateY(-50%);
+      color: var(--color-primary-emphasis);
+      background: color-mix(in srgb, var(--color-primary) 9%, var(--color-card));
+      font-size: .78rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .settings-secret-status {
+      margin-top: .55rem;
+      color: var(--color-muted-foreground);
+      font-size: .78rem;
+      line-height: 1.45;
+    }
+    .settings-secret-status.is-saved {
+      color: #15803d;
+      font-weight: 600;
+    }
+    .settings-secret-status.is-unreadable {
+      color: #b91c1c;
+      font-weight: 600;
+    }
     .settings-field--wide {
       grid-column: 1 / -1;
     }
@@ -338,10 +373,13 @@
                           $type = $field['type'] ?? 'text';
                           $fallback = (string) ($field['fallback'] ?? ($type === 'color' ? '#6f4f43' : ''));
                           $value = $fieldValue($key, $fallback);
+                          if (\App\Support\SecureSettings::isSecret($key)) {
+                              $value = '';
+                          }
                           if ($type === 'image') {
                               $value = \App\Support\AssetUrl::relative($value, $fallback) ?? $fallback;
                           }
-                          $isWide = in_array($type, ['textarea', 'credential', 'auto_links'], true);
+                          $isWide = in_array($type, ['textarea', 'secret', 'credential', 'auto_links'], true);
                       @endphp
 
                       <div class="settings-field-card {{ $isWide ? 'settings-field--wide' : '' }}">
@@ -370,6 +408,31 @@
                           <textarea id="setting-{{ $key }}" class="input min-h-32" name="settings[{{ $key }}]" placeholder="{{ ($secretConfigured[$key] ?? false) ? 'Rahasia tersimpan. Isi hanya untuk mengganti.' : ($field['placeholder'] ?? '') }}">{{ $value }}</textarea>
                           @if($secretConfigured[$key] ?? false)
                             <p class="mt-2 text-xs text-muted-foreground">Rahasia sudah tersimpan dan tidak ditampilkan kembali.</p>
+                          @endif
+                        @elseif($type === 'secret')
+                          @php
+                              $hasSecret = (bool) ($secretConfigured[$key] ?? false);
+                              $hasUnreadableSecret = (bool) ($secretUnreadable[$key] ?? false);
+                          @endphp
+                          <div class="settings-secret-field">
+                            <input
+                              id="setting-{{ $key }}"
+                              class="input"
+                              type="password"
+                              name="settings[{{ $key }}]"
+                              value="{{ $value }}"
+                              autocomplete="new-password"
+                              placeholder="{{ $hasSecret ? 'Secret tersimpan. Isi hanya untuk mengganti.' : 'Masukkan secret baru' }}"
+                              data-secret-input
+                            />
+                            <button class="settings-secret-toggle" type="button" aria-controls="setting-{{ $key }}" aria-pressed="false" data-secret-toggle>Tampilkan</button>
+                          </div>
+                          @if($hasUnreadableSecret)
+                            <p class="settings-secret-status is-unreadable">Secret lama tidak dapat dibaca. Ini biasanya terjadi setelah APP_KEY berubah. Isi ulang secret lalu simpan Settings.</p>
+                          @elseif($hasSecret)
+                            <p class="settings-secret-status is-saved">Secret aktif tersimpan terenkripsi. Kolom sengaja dikosongkan setelah halaman dimuat ulang.</p>
+                          @else
+                            <p class="settings-secret-status">Belum ada secret aktif yang tersimpan.</p>
                           @endif
                         @elseif($type === 'credential')
                           @php($hasCredential = (bool) ($secretConfigured[$key] ?? false))
@@ -508,6 +571,18 @@
           submit.classList.add('is-loading');
         });
       }
+
+      document.querySelectorAll('[data-secret-toggle]').forEach(function (button) {
+        var input = document.getElementById(button.getAttribute('aria-controls'));
+        if (! input) return;
+
+        button.addEventListener('click', function () {
+          var showing = input.type === 'text';
+          input.type = showing ? 'password' : 'text';
+          button.textContent = showing ? 'Tampilkan' : 'Sembunyikan';
+          button.setAttribute('aria-pressed', showing ? 'false' : 'true');
+        });
+      });
 
       document.querySelectorAll('[data-image-field]').forEach(function (field) {
         var input = field.querySelector('[data-image-input]');

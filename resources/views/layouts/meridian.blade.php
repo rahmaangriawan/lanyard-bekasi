@@ -10,7 +10,6 @@
         ],
         'Blog' => [
             ['label' => 'Pos', 'href' => route('cms.index', 'posts'), 'icon' => 'file', 'active' => $resource === 'posts'],
-            ['label' => 'Penulis', 'href' => route('cms.writers.index'), 'icon' => 'file', 'active' => request()->routeIs('cms.writers.*')],
             ['label' => 'Kategori Blog', 'href' => route('cms.index', 'categories') . '?type=BLOG', 'icon' => 'file', 'active' => $resource === 'categories' && $categoryType !== 'PRODUCT'],
             ['label' => 'Halaman', 'href' => route('cms.index', 'pages'), 'icon' => 'file', 'active' => $resource === 'pages'],
             ['label' => 'Generator Kota', 'href' => route('cms.index', 'city-pages'), 'icon' => 'chart', 'active' => $resource === 'city-pages'],
@@ -26,6 +25,7 @@
             ['label' => 'Formulir', 'href' => route('cms.index', 'inquiries'), 'icon' => 'file', 'active' => $resource === 'inquiries'],
         ],
         'Sistem' => [
+            ['label' => 'Penulis', 'href' => route('cms.writers.index'), 'icon' => 'file', 'active' => request()->routeIs('cms.writers.*')],
             ['label' => 'Laporan 404', 'href' => route('cms.not-found-report'), 'icon' => 'chart', 'active' => request()->routeIs('cms.not-found-report')],
             ['label' => 'Media Library', 'href' => route('cms.index', 'media'), 'icon' => 'media', 'active' => $resource === 'media'],
             ['label' => 'Redirect', 'href' => route('cms.index', 'redirects'), 'icon' => 'file', 'active' => $resource === 'redirects'],

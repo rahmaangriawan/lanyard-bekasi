@@ -589,6 +589,12 @@ class CmsResourceController extends Controller
                 $key => SecureSettings::decrypt($key, $settings[$key] ?? '') !== '',
             ])
             ->all();
+        $secretUnreadable = collect(SecureSettings::SECRET_KEYS)
+            ->mapWithKeys(fn (string $key) => [
+                $key => SecureSettings::isEncryptedPayload($settings[$key] ?? '')
+                    && ! ($secretConfigured[$key] ?? false),
+            ])
+            ->all();
 
         foreach (SecureSettings::SECRET_KEYS as $secretKey) {
             if (array_key_exists($secretKey, $settings)) {
@@ -611,6 +617,7 @@ class CmsResourceController extends Controller
             'groups' => $groups,
             'settings' => $settings,
             'secretConfigured' => $secretConfigured,
+            'secretUnreadable' => $secretUnreadable,
             'seoAutoLinks' => $seoAutoLinks,
             'rawSettings' => $settingRows
                 ->reject(fn (Setting $setting) => in_array($setting->key, $knownKeys, true))
@@ -670,6 +677,32 @@ class CmsResourceController extends Controller
         }
 
         $settingsInput['seo_auto_links'] = json_encode($seoLinks, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+
+        $effectiveSetting = static function (string $key) use ($settingsInput): string {
+            $submitted = trim((string) ($settingsInput[$key] ?? ''));
+
+            return $submitted !== '' ? $submitted : trim(SecureSettings::get($key));
+        };
+        $turnstileEnabled = in_array(
+            'true',
+            [
+                $effectiveSetting('turnstile_homepage_enabled'),
+                $effectiveSetting('turnstile_login_enabled'),
+            ],
+            true,
+        );
+
+        if ($turnstileEnabled && $effectiveSetting('turnstile_site_key') === '') {
+            throw ValidationException::withMessages([
+                'settings.turnstile_site_key' => 'Turnstile Site Key wajib diisi ketika Turnstile diaktifkan.',
+            ]);
+        }
+
+        if ($turnstileEnabled && $effectiveSetting('turnstile_secret_key') === '') {
+            throw ValidationException::withMessages([
+                'settings.turnstile_secret_key' => 'Turnstile Secret Key wajib diisi ulang dan disimpan ketika Turnstile diaktifkan.',
+            ]);
+        }
 
         foreach ($settingsInput as $key => $value) {
             if (! is_string($key) || ! preg_match('/^[A-Za-z0-9_.-]+$/', $key)) {
@@ -1152,9 +1185,9 @@ class CmsResourceController extends Controller
                     ['key' => 'turnstile_homepage_enabled', 'label' => 'Turnstile Homepage Enabled', 'type' => 'select', 'options' => ['false' => 'Nonaktif', 'true' => 'Aktif']],
                     ['key' => 'turnstile_login_enabled', 'label' => 'Turnstile Login Enabled', 'type' => 'select', 'options' => ['false' => 'Nonaktif', 'true' => 'Aktif']],
                     ['key' => 'turnstile_site_key', 'label' => 'Turnstile Site Key', 'type' => 'text'],
-                    ['key' => 'turnstile_secret_key', 'label' => 'Turnstile Secret Key', 'type' => 'textarea'],
+                    ['key' => 'turnstile_secret_key', 'label' => 'Turnstile Secret Key', 'type' => 'secret'],
                     ['key' => 'otp_verify_url', 'label' => 'OTP Verify URL', 'type' => 'text'],
-                    ['key' => 'otp_api_key', 'label' => 'OTP API Key', 'type' => 'textarea'],
+                    ['key' => 'otp_api_key', 'label' => 'OTP API Key', 'type' => 'secret'],
                     ['key' => 'otp_target', 'label' => 'OTP Target', 'type' => 'text'],
                 ],
             ],
