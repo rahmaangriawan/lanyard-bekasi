@@ -29,6 +29,7 @@ class ImportInitialContent extends Command
         }
 
         if (! $this->option('force') && $publishedPosts >= 6) {
+            AuthorProfile::assignUnownedPosts(AuthorProfile::primaryAuthor());
             $this->line('Initial public content already exists; import skipped.');
 
             return self::SUCCESS;

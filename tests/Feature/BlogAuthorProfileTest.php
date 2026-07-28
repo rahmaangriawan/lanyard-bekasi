@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Post;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Artisan;
 use Tests\TestCase;
 
 class BlogAuthorProfileTest extends TestCase
@@ -94,5 +95,24 @@ class BlogAuthorProfileTest extends TestCase
 
         $this->assertSame(1, \App\Support\AuthorProfile::assignUnownedPosts($author));
         $this->assertSame($author->id, $post->fresh()->authorId);
+    }
+
+    public function test_initial_import_backfills_existing_content_when_sql_import_is_skipped(): void
+    {
+        $author = User::factory()->create(['role' => 'ADMIN']);
+        foreach (range(1, 6) as $index) {
+            Post::query()->create([
+                'title' => 'Artikel '.$index,
+                'slug' => 'artikel-'.$index,
+                'content' => '<p>Isi.</p>',
+                'published' => true,
+            ]);
+        }
+
+        $exitCode = Artisan::call('content:import-initial');
+        $output = Artisan::output();
+        $this->assertSame(0, $exitCode, $output);
+        $this->assertSame(6, Post::query()->where('authorId', $author->id)->count());
+        $this->assertStringContainsString('import skipped', $output);
     }
 }

@@ -228,6 +228,7 @@ jobs:
 
           "$PHP_BIN" artisan optimize:clear
           "$PHP_BIN" artisan migrate --force --no-interaction
+          "$PHP_BIN" artisan content:import-initial --no-interaction
           "$PHP_BIN" artisan storage:link --force
           "$PHP_BIN" artisan optimize
 
