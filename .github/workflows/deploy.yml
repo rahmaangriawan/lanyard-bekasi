@@ -248,6 +248,26 @@ jobs:
           reset_foreign_runtime_directory storage/logs
 
           "$PHP_BIN" artisan optimize:clear
+
+          if ! ENV_FILE="$APP_DIR/.env" "$PHP_BIN" -r '
+            $contents = file_get_contents(getenv("ENV_FILE"));
+
+            if (! preg_match("/^APP_KEY=(.*)$/m", $contents, $matches)) {
+                exit(1);
+            }
+
+            $key = trim(trim($matches[1]), "\"\x27");
+
+            if (str_starts_with($key, "base64:")) {
+                $key = base64_decode(substr($key, 7), true);
+            }
+
+            exit(is_string($key) && strlen($key) === 32 ? 0 : 1);
+          '; then
+            echo "APP_KEY belum valid; membuat application key production."
+            "$PHP_BIN" artisan key:generate --force --no-interaction
+          fi
+
           "$PHP_BIN" artisan migrate --force --no-interaction
           "$PHP_BIN" artisan content:import-initial --no-interaction
           "$PHP_BIN" artisan storage:link --force
