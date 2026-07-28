@@ -112,6 +112,8 @@ class SecurityHardeningTest extends TestCase
 
     public function test_failed_login_uses_indonesian_message(): void
     {
+        app()->setLocale('id');
+
         User::factory()->create([
             'email' => 'admin@example.com',
             'password' => 'correct-password',
