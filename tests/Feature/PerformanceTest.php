@@ -6,8 +6,10 @@ use App\Models\Post;
 use App\Models\Product;
 use App\Models\Setting;
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use DOMDocument;
+use DOMXPath;
 use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\Support\Facades\Cache;
@@ -69,6 +71,24 @@ class PerformanceTest extends TestCase
             $this->assertMatchesRegularExpression('/\bloading="(?:lazy|eager)"/i', $image);
             $this->assertMatchesRegularExpression('/\bdecoding="async"/i', $image);
         }
+    }
+
+    public function test_homepage_accessibility_semantics_are_well_formed(): void
+    {
+        $html = $this->get('/')->assertOk()->getContent();
+        $document = new DOMDocument;
+        $previous = libxml_use_internal_errors(true);
+        $document->loadHTML($html);
+        libxml_clear_errors();
+        libxml_use_internal_errors($previous);
+        $xpath = new DOMXPath($document);
+
+        $this->assertSame(1, $xpath->query('//*[@class="home-testimonials__stars" and @role="img" and @aria-label="Rating 5 dari 5"]')->length);
+        $this->assertSame(1, $xpath->query('//*[@class="home-testimonials__dots" and @role="group" and @aria-label="Pilih testimoni"]')->length);
+        $this->assertSame(3, $xpath->query('//button[contains(concat(" ", normalize-space(@class), " "), " home-testimonials__dot ")]')->length);
+        $this->assertSame(1, $xpath->query('//ul[contains(concat(" ", normalize-space(@class), " "), " home-products__grid ")]')->length);
+        $this->assertGreaterThan(0, $xpath->query('//ul[contains(concat(" ", normalize-space(@class), " "), " home-products__grid ")]/li[contains(concat(" ", normalize-space(@class), " "), " home-products__card ")]')->length);
+        $this->assertSame(0, $xpath->query('//article[@role="listitem"]')->length);
     }
 
     public function test_login_and_comments_keep_session_and_csrf_protection(): void

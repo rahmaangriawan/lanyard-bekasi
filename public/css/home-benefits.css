@@ -9,7 +9,7 @@
 
 .home-benefits {
   --benefit-green: #0b7d35;
-  --benefit-panel: #168a40;
+  --benefit-panel: #14833b;
   --benefit-border: rgb(255 255 255 / 0.16);
   background: var(--benefit-green);
   padding: clamp(72px, 8vw, 104px) 0;
@@ -38,7 +38,7 @@
 .home-benefits__header p {
   max-width: 620px;
   margin: 16px 0 0;
-  color: rgb(255 255 255 / 0.82);
+  color: #ffffff;
   font-size: clamp(15px, 1.3vw, 17px);
   line-height: 1.6;
 }
@@ -86,7 +86,7 @@
 
 .benefit-item p {
   margin: 0;
-  color: rgb(255 255 255 / 0.82);
+  color: #ffffff;
   font-size: 15px;
   line-height: 1.65;
 }

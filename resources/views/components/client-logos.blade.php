@@ -1,7 +1,7 @@
 {{-- Client Logos — overlaps hero on scroll, expands from 1000px to 1280px --}}
 <section class="relative z-10 py-12 border-y border-slate-200/50 bg-white overflow-hidden" id="client-logos-section">
   <div class="client-logos-inner px-6 lg:px-10 mx-auto">
-    <p class="text-center text-label-bold text-slate-500 uppercase tracking-widest mb-10">
+    <p class="text-center text-label-bold text-slate-700 uppercase tracking-widest mb-10">
       Dipercaya oleh Perusahaan Terkemuka
     </p>
 

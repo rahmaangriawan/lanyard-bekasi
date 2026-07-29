@@ -41,13 +41,13 @@
       </a>
     </header>
 
-    <div class="home-products__grid" role="list" aria-label="Produk unggulan Pusat Tali Lanyard">
+    <ul class="home-products__grid" aria-label="Produk unggulan Pusat Tali Lanyard">
       @foreach ($products as $product)
         @php
           $image = $asset($product->featuredImage ?? null);
           $description = $plain($product->shortDescription ?? '');
         @endphp
-        <article class="home-products__card" role="listitem">
+        <li class="home-products__card">
           <a href="/produk/{{ $product->slug }}" aria-label="Lihat detail {{ $product->name }}">
             <div class="home-products__image-wrap">
               <img
@@ -78,8 +78,8 @@
               </div>
             </div>
           </a>
-        </article>
+        </li>
       @endforeach
-    </div>
+    </ul>
   </div>
 </section>

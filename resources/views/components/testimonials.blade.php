@@ -30,7 +30,7 @@
 <section class="home-testimonials" id="testimoni" aria-labelledby="home-testimonials-title" data-testimonials>
   <div class="home-testimonials__container">
     <header class="home-testimonials__header">
-      <div class="home-testimonials__stars" aria-label="Rating 5 dari 5">
+      <div class="home-testimonials__stars" role="img" aria-label="Rating 5 dari 5">
         @for ($star = 0; $star < 5; $star++)
           <span aria-hidden="true">&#9733;</span>
         @endfor
@@ -70,7 +70,7 @@
       @endforeach
     </div>
 
-    <div class="home-testimonials__dots" aria-label="Pilih testimoni">
+    <div class="home-testimonials__dots" role="group" aria-label="Pilih testimoni">
       @foreach ($testimonials as $index => $testimonial)
         <button
           type="button"

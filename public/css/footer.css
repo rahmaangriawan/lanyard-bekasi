@@ -172,7 +172,7 @@
 
 .site-footer__summary p {
   margin: 0;
-  color: #8f98a3;
+  color: #b8c0c9;
   font-size: 13px;
   line-height: 1.55;
 }
@@ -180,7 +180,7 @@
 .site-footer__summary small {
   display: block;
   margin-top: 16px;
-  color: #68717c;
+  color: #aeb6c0;
   font-size: 12px;
 }
 
@@ -211,7 +211,7 @@
   margin-top: clamp(46px, 6vw, 82px);
   margin-bottom: -0.15em;
   margin-left: 50%;
-  color: #55595e;
+  color: #7f858c;
   font-size: clamp(5.25rem, 14.6vw, 13.75rem);
   font-weight: 700;
   letter-spacing: -0.075em;
