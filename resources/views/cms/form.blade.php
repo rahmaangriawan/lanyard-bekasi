@@ -7,9 +7,9 @@
     $isSimpleForm = $resource === 'redirects';
     $canUploadMedia = auth()->user()?->canAccessCmsResource('media', true) ?? false;
     $formAction = $isEdit ? route('cms.update', [$resource, $item->id]) : route('cms.store', $resource);
-    $sidebarNames = ['published', 'approved', 'createdAt', 'categoryId', 'featuredImage', 'imageUrl', 'logoUrl', 'metaTitle', 'metaDescription'];
+    $sidebarNames = ['authorId', 'published', 'approved', 'createdAt', 'categoryId', 'featuredImage', 'imageUrl', 'logoUrl', 'metaTitle', 'metaDescription'];
     $seoNames = ['metaTitle', 'metaDescription'];
-    $generalNames = ['published', 'approved', 'createdAt', 'categoryId', 'featuredImage', 'imageUrl', 'logoUrl'];
+    $generalNames = ['authorId', 'published', 'approved', 'createdAt', 'categoryId', 'featuredImage', 'imageUrl', 'logoUrl'];
 
     $fieldValue = function (array $field) use ($item, $defaults) {
         $name = $field['name'];

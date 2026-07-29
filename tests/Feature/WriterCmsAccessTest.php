@@ -124,6 +124,19 @@ class WriterCmsAccessTest extends TestCase
         $this->assertSame($writer->id, $adminPost->fresh()->authorId);
     }
 
+    public function test_admin_post_form_places_author_before_publish_status(): void
+    {
+        $admin = User::factory()->create(['role' => User::ROLE_ADMIN]);
+
+        $this->actingAs($admin)
+            ->get('/kawruh/posts/create')
+            ->assertOk()
+            ->assertSeeInOrder([
+                'for="authorId"',
+                'for="published"',
+            ], false);
+    }
+
     public function test_admin_can_manage_writer_profiles_and_delete_with_reassignment(): void
     {
         $admin = User::factory()->create([

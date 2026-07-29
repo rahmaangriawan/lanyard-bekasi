@@ -861,12 +861,7 @@ class CmsResourceController extends Controller
                     ['key' => 'published', 'label' => 'Status', 'type' => 'boolean'],
                     ['key' => 'createdAt', 'label' => 'Dibuat', 'type' => 'date'],
                 ],
-                'fields' => array_merge(
-                    $this->contentFields('title', true),
-                    auth()->user()?->isAdmin()
-                        ? [['name' => 'authorId', 'label' => 'Penulis', 'type' => 'select', 'optionsKey' => 'authors']]
-                        : [],
-                ),
+                'fields' => $this->postFields(auth()->user()?->isAdmin() ?? false),
             ],
             'pages' => [
                 'key' => 'pages',
@@ -1236,6 +1231,25 @@ class CmsResourceController extends Controller
             ['name' => 'metaTitle', 'label' => 'Meta Title', 'type' => 'text'],
             ['name' => 'metaDescription', 'label' => 'Meta Description', 'type' => 'textarea'],
         ]);
+    }
+
+    private function postFields(bool $withAuthor): array
+    {
+        $fields = $this->contentFields('title', true);
+
+        if (! $withAuthor) {
+            return $fields;
+        }
+
+        $publishedIndex = array_search('published', array_column($fields, 'name'), true);
+        array_splice($fields, $publishedIndex === false ? count($fields) : $publishedIndex, 0, [[
+            'name' => 'authorId',
+            'label' => 'Penulis',
+            'type' => 'select',
+            'optionsKey' => 'authors',
+        ]]);
+
+        return $fields;
     }
 
     private function authorizeResource(Request $request, string $resource, bool $mutating = false): void
