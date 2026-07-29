@@ -40,6 +40,12 @@ class CmsResourceController extends Controller
     public function index(Request $request, string $resource): View
     {
         $this->authorizeResource($request, $resource);
+        $request->validate([
+            'q' => ['nullable', 'string', 'max:200'],
+            'per_page' => ['nullable', 'integer', 'min:1', 'max:500'],
+            'type' => ['nullable', 'string', 'max:50'],
+            'published' => ['nullable', 'boolean'],
+        ]);
         $config = $this->config($resource);
 
         if ($resource === 'media') {
@@ -186,6 +192,11 @@ class CmsResourceController extends Controller
     public function mediaPicker(Request $request): JsonResponse
     {
         $this->authorizeResource($request, 'media');
+        $request->validate([
+            'q' => ['nullable', 'string', 'max:200'],
+            'per_page' => ['nullable', 'integer', 'min:1', 'max:48'],
+            'page' => ['nullable', 'integer', 'min:1'],
+        ]);
         $perPage = max(1, min($request->integer('per_page') ?: 24, 48));
         $search = trim((string) $request->query('q', ''));
         $query = Media::query()->where('mimetype', 'like', 'image/%');

@@ -31,7 +31,7 @@ class LoginRequest extends FormRequest
         return [
             'email' => ['required', 'string', 'email'],
             'password' => ['required', 'string'],
-            'cf-turnstile-response' => ['nullable', 'string'],
+            'cf-turnstile-response' => ['nullable', 'string', 'max:4096'],
         ];
     }
 

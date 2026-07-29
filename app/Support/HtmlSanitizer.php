@@ -60,7 +60,7 @@ class HtmlSanitizer
             return '';
         }
 
-        $document = new DOMDocument();
+        $document = new DOMDocument;
         $previous = libxml_use_internal_errors(true);
 
         $document->loadHTML(
@@ -97,6 +97,7 @@ class HtmlSanitizer
                 if (! in_array($tag, self::ALLOWED_TAGS, true)) {
                     self::unwrapOrRemove($child);
                     $child = $next;
+
                     continue;
                 }
 
@@ -114,6 +115,7 @@ class HtmlSanitizer
 
         if (in_array($tag, ['script', 'style', 'iframe', 'object', 'embed', 'link', 'meta'], true)) {
             $element->parentNode?->removeChild($element);
+
             return;
         }
 
@@ -134,27 +136,65 @@ class HtmlSanitizer
 
             if (str_starts_with($name, 'on') || str_starts_with($name, 'data-') || ! in_array($name, $allowed, true)) {
                 $element->removeAttributeNode($attribute);
+
                 continue;
             }
 
-            if (in_array($name, ['href', 'src'], true) && ! self::isSafeUrl($value)) {
+            if (in_array($name, ['href', 'src'], true) && ! self::isSafeUrl($value, $name)) {
                 $element->removeAttributeNode($attribute);
             }
         }
 
-        if ($tag === 'a' && $element->hasAttribute('target')) {
-            $element->setAttribute('rel', 'noopener noreferrer');
+        if ($tag === 'a') {
+            $target = strtolower($element->getAttribute('target'));
+            if ($target !== '' && ! in_array($target, ['_blank', '_self'], true)) {
+                $element->removeAttribute('target');
+            }
+
+            $allowedRel = ['nofollow', 'noopener', 'noreferrer', 'sponsored', 'ugc'];
+            $rel = array_values(array_unique(array_filter(
+                preg_split('/\s+/', strtolower($element->getAttribute('rel'))) ?: [],
+                fn (string $token): bool => in_array($token, $allowedRel, true),
+            )));
+            if ($element->getAttribute('target') === '_blank') {
+                $rel = array_values(array_unique([...$rel, 'noopener', 'noreferrer']));
+            }
+
+            if ($rel === []) {
+                $element->removeAttribute('rel');
+            } else {
+                $element->setAttribute('rel', implode(' ', $rel));
+            }
         }
     }
 
-    private static function isSafeUrl(string $value): bool
+    private static function isSafeUrl(string $value, string $attribute): bool
     {
-        if ($value === '' || str_starts_with($value, '#') || str_starts_with($value, '/')) {
+        if ($value === '') {
             return true;
         }
 
-        $scheme = strtolower((string) parse_url($value, PHP_URL_SCHEME));
+        $decoded = rawurldecode($value);
+        if (
+            preg_match('/[\x00-\x1F\x7F]/', $decoded)
+            || str_starts_with($decoded, '//')
+            || str_starts_with($decoded, '\\')
+        ) {
+            return false;
+        }
 
-        return in_array($scheme, ['http', 'https', 'mailto', 'tel'], true);
+        if (str_starts_with($decoded, '#') || preg_match('#^/(?!/)#', $decoded)) {
+            return true;
+        }
+
+        $scheme = strtolower((string) parse_url($decoded, PHP_URL_SCHEME));
+
+        if ($scheme === '') {
+            return true;
+        }
+
+        return $attribute === 'src'
+            ? in_array($scheme, ['http', 'https'], true)
+            : in_array($scheme, ['http', 'https', 'mailto', 'tel'], true);
     }
 }

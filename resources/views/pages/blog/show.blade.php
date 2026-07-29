@@ -4,11 +4,12 @@
   use App\Support\AssetUrl;
   use App\Support\AuthorProfile;
   use App\Support\AutoLinkSeo;
+  use App\Support\HtmlSanitizer;
   use App\Support\ResponsiveImage;
   use Illuminate\Support\Str;
 
   $imageUrl = fn ($source) => AssetUrl::relative($source);
-  $cleanContent = AssetUrl::html($post->content ?? '');
+  $cleanContent = AssetUrl::html(HtmlSanitizer::clean($post->content ?? ''));
   $cleanContent = preg_replace('/<div[^>]*>\s*<p[^>]*>\s*Bagikan artikel\s*<\/p>[\s\S]*?<button[^>]*>[\s\S]*?<\/button>\s*<\/div>\s*<\/div>/i', '', $cleanContent);
   $processedContent = AutoLinkSeo::apply($cleanContent);
   $plainContent = trim(preg_replace('/\s+/u', ' ', strip_tags($cleanContent)));

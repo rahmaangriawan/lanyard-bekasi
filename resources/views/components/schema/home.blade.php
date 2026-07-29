@@ -148,10 +148,10 @@
   // Satu sumber data untuk FAQ yang terlihat dan JSON-LD agar tidak drift.
   $faqSchema = \App\Support\StructuredData::faqSchema(config('seo.faq', []));
 @endphp
-<script type="application/ld+json">{!! json_encode($orgSchema, JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE) !!}</script>
-<script type="application/ld+json">{!! json_encode($localBusinessSchema, JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE) !!}</script>
-<script type="application/ld+json">{!! json_encode($websiteSchema, JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE) !!}</script>
-<script type="application/ld+json">{!! json_encode($breadcrumbSchema, JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE) !!}</script>
+<script type="application/ld+json">{!! \App\Support\StructuredData::encode($orgSchema) !!}</script>
+<script type="application/ld+json">{!! \App\Support\StructuredData::encode($localBusinessSchema) !!}</script>
+<script type="application/ld+json">{!! \App\Support\StructuredData::encode($websiteSchema) !!}</script>
+<script type="application/ld+json">{!! \App\Support\StructuredData::encode($breadcrumbSchema) !!}</script>
 @if($faqSchema)
-<script type="application/ld+json">{!! json_encode($faqSchema, JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE) !!}</script>
+<script type="application/ld+json">{!! \App\Support\StructuredData::encode($faqSchema) !!}</script>
 @endif

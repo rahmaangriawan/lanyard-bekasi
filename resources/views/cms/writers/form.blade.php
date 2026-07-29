@@ -92,11 +92,16 @@
             status.textContent = payload.media.length ? 'Pilih gambar untuk avatar.' : 'Belum ada gambar.';
             payload.media.forEach(function (item) {
               var button = document.createElement('button');
+              var image = document.createElement('img');
+              var label = document.createElement('span');
               button.type = 'button';
               button.className = 'card overflow-hidden text-left';
-              button.innerHTML = '<img style="width:100%;aspect-ratio:1;object-fit:cover" alt=""><span class="block truncate p-2 text-xs"></span>';
-              button.querySelector('img').src = item.preview_url || item.url;
-              button.querySelector('span').textContent = item.filename;
+              image.style.cssText = 'width:100%;aspect-ratio:1;object-fit:cover';
+              image.alt = '';
+              image.src = item.preview_url || item.url;
+              label.className = 'block truncate p-2 text-xs';
+              label.textContent = item.filename;
+              button.append(image, label);
               button.addEventListener('click', function () {
                 avatar.value = item.url;
                 dialog.close();

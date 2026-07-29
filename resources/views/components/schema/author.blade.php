@@ -92,8 +92,8 @@
   }
 @endphp
 
-<script type="application/ld+json">{!! json_encode($personSchema, JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE) !!}</script>
-<script type="application/ld+json">{!! json_encode($breadcrumbSchema, JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE) !!}</script>
+<script type="application/ld+json">{!! \App\Support\StructuredData::encode($personSchema) !!}</script>
+<script type="application/ld+json">{!! \App\Support\StructuredData::encode($breadcrumbSchema) !!}</script>
 @if(!empty($postsList))
-<script type="application/ld+json">{!! json_encode($itemListSchema, JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE) !!}</script>
+<script type="application/ld+json">{!! \App\Support\StructuredData::encode($itemListSchema) !!}</script>
 @endif

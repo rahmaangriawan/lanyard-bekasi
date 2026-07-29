@@ -76,6 +76,10 @@ const toggleItem = (item: Record<string, unknown>) => {
 
 const canToggle = props.config.fields.some((field) => field.name === 'published' || field.name === 'approved');
 const canEdit = props.resource !== 'media';
+const paginationLabel = (label: string) => label
+    .replace(/&laquo;/gi, '‹')
+    .replace(/&raquo;/gi, '›')
+    .replace(/<[^>]*>/g, '');
 </script>
 
 <template>
@@ -169,8 +173,7 @@ const canEdit = props.resource !== 'media';
                     class="rounded-full border px-3 py-2 text-sm font-extrabold"
                     :class="link.active ? 'border-primary bg-primary text-white' : 'border-border bg-white text-foreground'"
                     :href="link.url || '#'"
-                    v-html="link.label"
-                />
+                >{{ paginationLabel(link.label) }}</Link>
             </div>
         </section>
     </AuthenticatedLayout>

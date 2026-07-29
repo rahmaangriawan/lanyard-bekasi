@@ -50,5 +50,5 @@
     ],
   ];
 @endphp
-<script type="application/ld+json">{!! json_encode($collectionSchema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}</script>
-<script type="application/ld+json">{!! json_encode($breadcrumb, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}</script>
+<script type="application/ld+json">{!! \App\Support\StructuredData::encode($collectionSchema) !!}</script>
+<script type="application/ld+json">{!! \App\Support\StructuredData::encode($breadcrumb) !!}</script>

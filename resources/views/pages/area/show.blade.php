@@ -1,5 +1,7 @@
 @extends('layouts.public')
 
+@php($safeContent = \App\Support\HtmlSanitizer::clean($cityPage->content ?? ''))
+
 @section('title', $cityPage->metaTitle ?: $cityPage->title.' | Pusat Tali Lanyard')
 @section('meta_description', $cityPage->metaDescription ?: 'Layanan cetak lanyard custom untuk '.$cityPage->title.'. Konsultasi kebutuhan event, kantor, sekolah, dan komunitas Anda.')
 @section('seo_canonical', rtrim(config('app.url', url('/')), '/').'/area/'.$cityPage->slug)
@@ -35,7 +37,7 @@
         <img src="{{ $cityPage->featuredImage }}" alt="{{ $cityPage->title }} - layanan lanyard custom Indonesia" class="mb-10 aspect-[16/8] w-full rounded-2xl object-cover shadow-sm" width="960" height="480" loading="eager" fetchpriority="high" decoding="async" />
       @endif
       <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-10 prose prose-slate max-w-none">
-        {!! $cityPage->content !!}
+        {!! $safeContent !!}
       </div>
     </div>
   </article>

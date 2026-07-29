@@ -168,9 +168,19 @@
 
       function refreshAvatar(url) {
         var name = (nameInput && nameInput.value || 'A').trim();
-        avatarPreview.innerHTML = url
-          ? '<img src="' + url.replace(/&/g, '&amp;').replace(/"/g, '&quot;') + '" alt="Foto profil" data-author-avatar-image />'
-          : '<span data-author-avatar-initial>' + (name.charAt(0) || 'A').toUpperCase() + '</span>';
+        avatarPreview.replaceChildren();
+        if (url) {
+          var image = document.createElement('img');
+          image.src = url;
+          image.alt = 'Foto profil';
+          image.setAttribute('data-author-avatar-image', '');
+          avatarPreview.appendChild(image);
+        } else {
+          var initial = document.createElement('span');
+          initial.setAttribute('data-author-avatar-initial', '');
+          initial.textContent = (name.charAt(0) || 'A').toUpperCase();
+          avatarPreview.appendChild(initial);
+        }
         if (removeAvatar) removeAvatar.disabled = !url;
       }
 
@@ -189,10 +199,14 @@
         status.textContent = 'Pilih gambar untuk foto profil.';
         items.forEach(function (item) {
           var button = document.createElement('button');
+          var image = document.createElement('img');
+          var label = document.createElement('span');
           button.type = 'button';
           button.className = 'author-media-item';
-          button.innerHTML = '<img src="' + item.url.replace(/&/g, '&amp;').replace(/"/g, '&quot;') + '" alt="" /><span></span>';
-          button.querySelector('span').textContent = item.filename;
+          image.src = item.url;
+          image.alt = '';
+          label.textContent = item.filename;
+          button.append(image, label);
           button.addEventListener('click', function () {
             avatarInput.value = item.url;
             refreshAvatar(item.url);

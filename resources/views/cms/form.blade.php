@@ -705,7 +705,7 @@
                         </button>
                       </span>
                     </div>
-                    <div class="quill-editor" data-quill-editor>{!! $value !!}</div>
+                    <div class="quill-editor" data-quill-editor>{!! \App\Support\HtmlSanitizer::clean((string) $value) !!}</div>
                   @elseif($type === 'select')
                     <select id="{{ $name }}" class="input" name="{{ $name }}" data-field="{{ $name }}">
                       <option value="">Pilih {{ $field['label'] }}</option>
@@ -1376,9 +1376,32 @@
         if (!featuredInput) return;
         featuredInput.value = url || '';
         if (preview) {
-          var actions = url ? '<span class="featured-preview__actions"><span class="featured-preview__icon" role="button" tabindex="0" data-clear-media aria-label="Hapus gambar"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24"><path fill="currentColor" d="M5 20.5c0 .83.67 1.5 1.5 1.5h11c.83 0 1.5-.67 1.5-1.5V7H5zM8 9h2v10H8zm6 0h2v10h-2zM17.5 4l-1-2h-9l-1 2H3v2h18V4z"/></svg></span></span>' : '';
-          preview.innerHTML = actions + (url ? '<img src="' + url.replace(/"/g, '&quot;') + '" alt="">' : '<span class="featured-preview__hint">Belum ada gambar<small>Klik untuk pilih dari Media Library</small></span>');
-          bindClearMedia(preview.querySelector('[data-clear-media]'));
+          preview.replaceChildren();
+          if (url) {
+            var actions = document.createElement('span');
+            var clear = document.createElement('span');
+            var image = document.createElement('img');
+            actions.className = 'featured-preview__actions';
+            clear.className = 'featured-preview__icon';
+            clear.setAttribute('role', 'button');
+            clear.tabIndex = 0;
+            clear.setAttribute('data-clear-media', '');
+            clear.setAttribute('aria-label', 'Hapus gambar');
+            clear.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M5 20.5c0 .83.67 1.5 1.5 1.5h11c.83 0 1.5-.67 1.5-1.5V7H5zM8 9h2v10H8zm6 0h2v10h-2zM17.5 4l-1-2h-9l-1 2H3v2h18V4z"/></svg>';
+            image.src = url;
+            image.alt = '';
+            actions.appendChild(clear);
+            preview.append(actions, image);
+            bindClearMedia(clear);
+          } else {
+            var hint = document.createElement('span');
+            var detail = document.createElement('small');
+            hint.className = 'featured-preview__hint';
+            hint.textContent = 'Belum ada gambar';
+            detail.textContent = 'Klik untuk pilih dari Media Library';
+            hint.appendChild(detail);
+            preview.appendChild(hint);
+          }
         }
         updateSeo();
       }
