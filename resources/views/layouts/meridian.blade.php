@@ -2,6 +2,7 @@
     $user = auth()->user();
     $resource = request()->route('resource');
     $categoryType = request('type');
+    $showPortfolioMenu = false;
     $adminMenuGroups = [
         'Utama' => [
             ['label' => 'Ringkasan', 'href' => route('dashboard'), 'icon' => 'dashboard', 'active' => request()->routeIs('dashboard')],
@@ -21,7 +22,9 @@
             ['label' => 'Orders', 'href' => route('cms.index', 'orders'), 'icon' => 'product', 'active' => $resource === 'orders'],
         ],
         'Lainnya' => [
-            ['label' => 'Portofolio', 'href' => route('cms.index', 'portfolio'), 'icon' => 'file', 'active' => $resource === 'portfolio'],
+            ...($showPortfolioMenu ? [
+                ['label' => 'Portofolio', 'href' => route('cms.index', 'portfolio'), 'icon' => 'file', 'active' => $resource === 'portfolio'],
+            ] : []),
             ['label' => 'Formulir', 'href' => route('cms.index', 'inquiries'), 'icon' => 'file', 'active' => $resource === 'inquiries'],
         ],
         'Sistem' => [

@@ -40,6 +40,7 @@ const userMenuOpen = ref(false);
 const productOpen = ref(true);
 const blogOpen = ref(true);
 const themeColor = ref('#6f4f43');
+const showPortfolioMenu = false;
 
 const user = computed(() => page.props.auth?.user);
 const flash = computed(() => page.props.flash as { success?: string; error?: string } | undefined);
@@ -48,7 +49,7 @@ const currentUrl = computed(() => page.url || '');
 const mainItems: NavItem[] = [
     { label: 'Ringkasan', href: route('dashboard'), active: 'dashboard', icon: LayoutDashboard },
     { label: 'Analitik', href: '/kawruh/analytics', icon: BarChart3 },
-    { label: 'Portofolio', href: route('cms.index', 'portfolio'), resource: 'portfolio', icon: BriefcaseBusiness },
+    ...(showPortfolioMenu ? [{ label: 'Portofolio', href: route('cms.index', 'portfolio'), resource: 'portfolio', icon: BriefcaseBusiness }] : []),
     { label: 'Formulir', href: route('cms.index', 'inquiries'), resource: 'inquiries', icon: Mail },
 ];
 
