@@ -103,7 +103,7 @@
   padding: 34px;
   overflow: hidden;
   border: 1px solid var(--detail-line);
-  border-radius: var(--detail-radius);
+  border-radius: 16px;
   background:
     linear-gradient(135deg, rgba(47, 143, 31, 0.06), transparent 44%),
     #f6f8f5;
