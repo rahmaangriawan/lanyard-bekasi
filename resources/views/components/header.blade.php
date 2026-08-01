@@ -17,7 +17,9 @@
     <nav class="site-header__nav" aria-label="Navigasi utama">
       <a href="{{ route('home') }}" class="site-header__logo" aria-label="Lanyard Bekasi, kembali ke beranda">
         <img
-          src="/uploads/lanyard-bekasi-logo.webp"
+          src="/uploads/lanyard-bekasi-logo-160w.webp"
+          srcset="/uploads/lanyard-bekasi-logo-160w.webp 160w, /uploads/lanyard-bekasi-logo-256w.webp 256w, /uploads/lanyard-bekasi-logo.webp 500w"
+          sizes="126px"
           alt="Lanyard Bekasi"
           width="500"
           height="122"

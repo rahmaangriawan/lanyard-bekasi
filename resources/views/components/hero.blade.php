@@ -37,20 +37,24 @@
       <div class="ptl-hero__shape" aria-hidden="true"></div>
       <figure class="ptl-hero__product ptl-hero__product--back">
         <img
-          src="/uploads/hero-lanyard-bekasi-custom-02.webp"
+          src="/uploads/hero-lanyard-bekasi-custom-02-320w.webp"
+          srcset="/uploads/hero-lanyard-bekasi-custom-02-192w.webp 192w, /uploads/hero-lanyard-bekasi-custom-02-320w.webp 320w, /uploads/hero-lanyard-bekasi-custom-02-480w.webp 480w, /uploads/hero-lanyard-bekasi-custom-02-640w.webp 640w, /uploads/hero-lanyard-bekasi-custom-02.webp 941w"
+          sizes="(max-width: 520px) 140px, (max-width: 980px) 190px, 230px"
           alt="Contoh lanyard custom biru dan putih Lanyard Bekasi"
           width="941"
-          height="1672"
+          height="1451"
           loading="eager"
           decoding="async"
         >
       </figure>
       <figure class="ptl-hero__product ptl-hero__product--front">
         <img
-          src="/uploads/hero-lanyard-bekasi-custom-01.webp"
+          src="/uploads/hero-lanyard-bekasi-custom-01-320w.webp"
+          srcset="/uploads/hero-lanyard-bekasi-custom-01-192w.webp 192w, /uploads/hero-lanyard-bekasi-custom-01-320w.webp 320w, /uploads/hero-lanyard-bekasi-custom-01-480w.webp 480w, /uploads/hero-lanyard-bekasi-custom-01-640w.webp 640w, /uploads/hero-lanyard-bekasi-custom-01.webp 940w"
+          sizes="(max-width: 520px) 150px, (max-width: 980px) 210px, 250px"
           alt="Contoh lanyard custom hijau dan hitam Lanyard Bekasi"
           width="940"
-          height="1672"
+          height="1436"
           loading="eager"
           fetchpriority="high"
           decoding="async"

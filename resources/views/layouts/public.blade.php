@@ -51,7 +51,9 @@
     <link rel="preload" href="/font-assets/geist-700" as="font" type="font/woff2" crossorigin>
 
     @if(request()->is('/'))
-    <link rel="preload" href="/uploads/hero-lanyard-bekasi-custom-01.webp" as="image" type="image/webp" fetchpriority="high">
+    <link rel="preload" href="/uploads/hero-lanyard-bekasi-custom-01-480w.webp" as="image" type="image/webp" fetchpriority="high"
+      imagesrcset="/uploads/hero-lanyard-bekasi-custom-01-192w.webp 192w, /uploads/hero-lanyard-bekasi-custom-01-320w.webp 320w, /uploads/hero-lanyard-bekasi-custom-01-480w.webp 480w, /uploads/hero-lanyard-bekasi-custom-01-640w.webp 640w, /uploads/hero-lanyard-bekasi-custom-01.webp 940w"
+      imagesizes="(max-width: 520px) 150px, (max-width: 980px) 210px, 250px">
     @endif
     @if(request()->routeIs('ordering'))
     <link rel="preload" href="/uploads/hero-cara-pemesanan-lanyard-bekasi.webp" as="image" type="image/webp" fetchpriority="high">

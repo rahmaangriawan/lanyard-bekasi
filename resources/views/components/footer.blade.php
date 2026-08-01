@@ -6,7 +6,9 @@
       <div class="site-footer__brand">
         <a class="site-footer__logo" href="{{ route('home') }}" aria-label="Lanyard Bekasi, kembali ke beranda">
           <img
-            src="/uploads/lanyard-bekasi-logo.webp"
+            src="/uploads/lanyard-bekasi-logo-160w.webp"
+            srcset="/uploads/lanyard-bekasi-logo-160w.webp 160w, /uploads/lanyard-bekasi-logo-256w.webp 256w, /uploads/lanyard-bekasi-logo.webp 500w"
+            sizes="154px"
             alt="Lanyard Bekasi"
             width="154"
             height="38"
