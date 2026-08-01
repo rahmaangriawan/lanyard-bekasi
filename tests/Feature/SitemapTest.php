@@ -36,6 +36,9 @@ class SitemapTest extends TestCase
         $this->get('/page-sitemap.xml')
             ->assertOk()
             ->assertSee('/produk')
+            ->assertSee('/layanan')
+            ->assertSee('/garansi')
+            ->assertSee('/faq')
             ->assertSee('/cara-pemesanan')
             ->assertSee('/blog')
             ->assertDontSee('/kebijakan')
@@ -56,7 +59,7 @@ class SitemapTest extends TestCase
     public function test_city_sitemap_and_public_city_page_only_expose_published_cities(): void
     {
         CityPage::query()->create([
-            'title' => 'Pusat Tali Lanyard Selatan',
+            'title' => 'Lanyard Bekasi Selatan',
             'slug' => 'indonesia-selatan',
             'content' => '<p>Layanan Indonesia Selatan.</p>',
             'published' => true,
@@ -73,7 +76,7 @@ class SitemapTest extends TestCase
             ->assertOk()
             ->assertSee('Layanan Indonesia Selatan.')
             ->assertSee('BreadcrumbList')
-            ->assertSee('Cetak Lanyard Custom Pusat Tali Lanyard Selatan');
+            ->assertSee('Cetak Lanyard Custom Lanyard Bekasi Selatan');
         $this->get('/area/kota-draft')->assertNotFound();
     }
 

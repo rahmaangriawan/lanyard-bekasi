@@ -9,7 +9,7 @@ use Illuminate\Support\Str;
 
 final class AuthorProfile
 {
-    public const DEFAULT_BIO = 'Tim Pusat Tali Lanyard menulis panduan seputar lanyard custom, kebutuhan event, dan branding perusahaan.';
+    public const DEFAULT_BIO = 'Tim Lanyard Bekasi menulis panduan seputar lanyard custom, kebutuhan event, dan branding perusahaan.';
 
     public static function primaryAuthor(): ?User
     {

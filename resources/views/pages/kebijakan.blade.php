@@ -1,247 +1,223 @@
 @extends('layouts.public')
 
-@section('title', 'Kebijakan Privasi Pusat Tali Lanyard - Keamanan Data')
-@section('meta_description', 'Kebijakan privasi Pusat Tali Lanyard: komitmen menjaga data pribadi, file desain, transaksi aman. Enkripsi HTTPS, akses terbatas, penghapusan file 30 hari.')
+@section('title', 'Kebijakan Privasi | Lanyard Bekasi')
+@section('meta_description', 'Pelajari cara Lanyard Bekasi mengumpulkan, menggunakan, menyimpan, dan melindungi data pribadi serta file desain pelanggan.')
+@section('seo_canonical', rtrim(config('app.url', url('/')), '/') . '/kebijakan')
 @section('seo_noindex', '1')
+
+@push('head')
+  <link rel="stylesheet" href="/css/service-pages.css?v={{ file_exists(public_path('css/service-pages.css')) ? filemtime(public_path('css/service-pages.css')) : 1 }}">
+  <link rel="stylesheet" href="/css/privacy-index.css?v={{ file_exists(public_path('css/privacy-index.css')) ? filemtime(public_path('css/privacy-index.css')) : 1 }}">
+@endpush
 
 @section('content')
 @php
-  $whatsappUrl = 'https://wa.me/6282210200700?text=Halo%20Lanyard%20Indonesia%2C%20saya%20mau%20tanya%20soal%20kebijakan%20privasi.';
+  $privacyWhatsappUrl = 'https://wa.me/6282210200700?text='.rawurlencode('Halo Lanyard Bekasi, saya ingin bertanya mengenai kebijakan privasi dan data saya.');
+
+  $privacyTrust = [
+    ['icon' => 'verified', 'title' => 'Data Dilindungi', 'description' => 'Akses dibatasi sesuai kebutuhan'],
+    ['icon' => 'design_services', 'title' => 'File untuk Produksi', 'description' => 'Digunakan sesuai tujuan pesanan'],
+    ['icon' => 'delete', 'title' => 'Retensi Terbatas', 'description' => 'File desain disimpan 30 hari'],
+    ['icon' => 'chat', 'title' => 'Permintaan Data', 'description' => 'Dapat diajukan kepada tim'],
+  ];
+
+  $securityMeasures = [
+    ['icon' => 'lock', 'title' => 'Saluran Terenkripsi', 'description' => 'Komunikasi data website dilindungi melalui HTTPS.'],
+    ['icon' => 'admin_panel_settings', 'title' => 'Akses Terbatas', 'description' => 'Data hanya diakses oleh staf yang menangani pesanan.'],
+    ['icon' => 'inventory', 'title' => 'Proteksi File', 'description' => 'File desain disimpan dengan pembatasan akses.'],
+    ['icon' => 'policy', 'title' => 'Evaluasi Berkala', 'description' => 'Praktik keamanan ditinjau dan disesuaikan secara berkala.'],
+  ];
 @endphp
 
-{{-- Hero --}}
-<section class="py-16 sm:py-20 border-b border-slate-200" style="background-color: #F4F6FA;">
-  <div class="mx-auto max-w-[1280px] px-6 lg:px-10">
-    <p class="inline-flex items-center gap-2 bg-white text-slate-700 px-4 py-2 rounded-full border border-slate-200 text-sm font-bold mb-6">
-      <span class="material-symbols-outlined text-base" style="font-variation-settings: 'FILL' 1;">shield</span>
-      Privasi Anda
-    </p>
-
-    <h1 class="font-bold leading-[1.08] text-slate-900 mb-6" style="font-size: clamp(2rem, 4vw, 3rem);">
-      Kebijakan Privasi
-    </h1>
-
-    <p class="text-slate-600 text-base md:text-lg leading-relaxed mb-8 max-w-2xl">
-      Kami di Pusat Tali Lanyard menghargai privasi Anda. Halaman ini menjelaskan bagaimana kami mengumpulkan, menggunakan, dan melindungi data pelanggan selama proses pemesanan lanyard custom.
-    </p>
-
-    <p class="text-sm text-slate-500">Terakhir diperbarui: Juli 2025</p>
-  </div>
-</section>
-
-{{-- Content --}}
-<section class="bg-white py-16 sm:py-20">
-  <div class="mx-auto max-w-[1000px] px-6 lg:px-10">
-    <div class="max-w-none space-y-12">
-
-      {{-- 1. Pendahuluan --}}
-      <div class="group">
-        <h2 class="text-2xl font-bold text-slate-900 mb-4 pb-2 border-b-2 border-slate-100 group-hover:border-slate-300 transition-colors">1. Pendahuluan</h2>
-        <p class="text-slate-600 text-lg leading-relaxed mb-4">
-          Selamat datang di Pusat Tali Lanyard. Kebijakan Privasi ini menjelaskan komitmen kami dalam menjaga kerahasiaan data dan informasi yang Anda berikan saat menggunakan layanan kami, baik melalui website, WhatsApp, email, maupun komunikasi langsung.
-        </p>
-        <p class="text-slate-600 text-lg leading-relaxed mb-4">
-          Dengan menggunakan layanan Pusat Tali Lanyard, Anda menyetujui pengumpulan dan penggunaan informasi sesuai dengan kebijakan ini. Jika Anda tidak setuju, mohon untuk tidak menggunakan layanan kami.
-        </p>
-      </div>
-
-      {{-- 2. Informasi yang Dikumpulkan --}}
-      <div class="group">
-        <h2 class="text-2xl font-bold text-slate-900 mb-4 pb-2 border-b-2 border-slate-100 group-hover:border-slate-300 transition-colors">2. Informasi yang Kami Kumpulkan</h2>
-        <p class="text-slate-600 text-lg leading-relaxed mb-4">
-          Dalam proses pemesanan lanyard custom, kami dapat mengumpulkan informasi berikut:
-        </p>
-        <ul class="space-y-4 text-slate-600 text-lg leading-relaxed mb-4 ml-2">
-          <li class="flex items-start gap-3">
-            <span class="material-symbols-outlined text-slate-400 shrink-0 mt-1" style="font-size: 20px;">check_circle</span>
-            <span><strong class="text-slate-800 font-semibold">Data Pribadi:</strong> Nama lengkap, nomor WhatsApp/telepon, alamat email, dan alamat pengiriman yang Anda berikan saat memesan.</span>
-          </li>
-          <li class="flex items-start gap-3">
-            <span class="material-symbols-outlined text-slate-400 shrink-0 mt-1" style="font-size: 20px;">check_circle</span>
-            <span><strong class="text-slate-800 font-semibold">Data Bisnis/Organisasi:</strong> Nama perusahaan, instansi, sekolah, atau komunitas yang tercantum dalam desain lanyard.</span>
-          </li>
-          <li class="flex items-start gap-3">
-            <span class="material-symbols-outlined text-slate-400 shrink-0 mt-1" style="font-size: 20px;">check_circle</span>
-            <span><strong class="text-slate-800 font-semibold">File Desain:</strong> Logo, artwork, mockup, dan file desain yang Anda kirimkan untuk keperluan produksi lanyard.</span>
-          </li>
-          <li class="flex items-start gap-3">
-            <span class="material-symbols-outlined text-slate-400 shrink-0 mt-1" style="font-size: 20px;">check_circle</span>
-            <span><strong class="text-slate-800 font-semibold">Data Pemesanan:</strong> Detail pesanan seperti jenis bahan, kuantitas, warna, aksesoris, dan riwayat transaksi.</span>
-          </li>
-          <li class="flex items-start gap-3">
-            <span class="material-symbols-outlined text-slate-400 shrink-0 mt-1" style="font-size: 20px;">check_circle</span>
-            <span><strong class="text-slate-800 font-semibold">Data Teknis:</strong> Alamat IP, jenis browser, halaman yang dikunjungi, dan durasi kunjungan (melalui cookie).</span>
-          </li>
-        </ul>
-      </div>
-
-      {{-- 3. Penggunaan Data --}}
-      <div class="group">
-        <h2 class="text-2xl font-bold text-slate-900 mb-4 pb-2 border-b-2 border-slate-100 group-hover:border-slate-300 transition-colors">3. Penggunaan Data</h2>
-        <p class="text-slate-600 text-lg leading-relaxed mb-4">
-          Informasi yang kami kumpulkan digunakan untuk:
-        </p>
-        <ul class="space-y-4 text-slate-600 text-lg leading-relaxed mb-6 ml-2">
-          <li class="flex items-start gap-3">
-            <span class="material-symbols-outlined text-slate-400 shrink-0 mt-1" style="font-size: 20px;">arrow_right_alt</span>
-            <span>Memproses dan mengelola pesanan lanyard custom Anda dari awal hingga pengiriman.</span>
-          </li>
-          <li class="flex items-start gap-3">
-            <span class="material-symbols-outlined text-slate-400 shrink-0 mt-1" style="font-size: 20px;">arrow_right_alt</span>
-            <span>Berkomunikasi terkait status pesanan, konfirmasi desain, dan estimasi waktu produksi.</span>
-          </li>
-          <li class="flex items-start gap-3">
-            <span class="material-symbols-outlined text-slate-400 shrink-0 mt-1" style="font-size: 20px;">arrow_right_alt</span>
-            <span>Mengirimkan informasi promo, penawaran spesial, atau update layanan (hanya jika Anda menyetujui).</span>
-          </li>
-          <li class="flex items-start gap-3">
-            <span class="material-symbols-outlined text-slate-400 shrink-0 mt-1" style="font-size: 20px;">arrow_right_alt</span>
-            <span>Meningkatkan kualitas layanan dan pengalaman pengguna di website kami.</span>
-          </li>
-          <li class="flex items-start gap-3">
-            <span class="material-symbols-outlined text-slate-400 shrink-0 mt-1" style="font-size: 20px;">arrow_right_alt</span>
-            <span>Memenuhi kewajiban hukum yang berlaku di wilayah Republik Indonesia.</span>
-          </li>
-        </ul>
-        <div class="bg-slate-50 border-l-4 border-slate-800 p-5 rounded-r-xl">
-          <p class="text-slate-700 text-lg leading-relaxed">
-            <strong class="text-slate-900 font-semibold">Komitmen Kami:</strong> Kami tidak pernah menjual, menyewakan, atau membagikan data pribadi Anda kepada pihak ketiga untuk tujuan pemasaran tanpa izin eksplisit dari Anda.
-          </p>
-        </div>
-      </div>
-
-      {{-- 4. Perlindungan File Desain --}}
-      <div class="group">
-        <h2 class="text-2xl font-bold text-slate-900 mb-4 pb-2 border-b-2 border-slate-100 group-hover:border-slate-300 transition-colors">4. Perlindungan File Desain & Kekayaan Intelektual</h2>
-        <p class="text-slate-600 text-lg leading-relaxed mb-4">
-          Kami memahami bahwa logo dan desain yang Anda kirimkan adalah aset berharga. Berikut kebijakan kami:
-        </p>
-        <ul class="space-y-4 text-slate-600 text-lg leading-relaxed mb-4 ml-2">
-          <li class="flex items-start gap-3">
-            <span class="material-symbols-outlined text-slate-400 shrink-0 mt-1" style="font-size: 20px;">lock</span>
-            <span>Semua file desain (logo, artwork, mockup) hanya digunakan untuk keperluan produksi pesanan Anda.</span>
-          </li>
-          <li class="flex items-start gap-3">
-            <span class="material-symbols-outlined text-slate-400 shrink-0 mt-1" style="font-size: 20px;">lock</span>
-            <span>File desain Anda <strong class="text-slate-800 font-semibold">tidak akan digunakan kembali, diperbanyak, atau dijadikan sampel</strong> tanpa izin tertulis.</span>
-          </li>
-          <li class="flex items-start gap-3">
-            <span class="material-symbols-outlined text-slate-400 shrink-0 mt-1" style="font-size: 20px;">lock</span>
-            <span>Setelah pesanan selesai dan serah terima dilakukan, file desain tetap kami simpan selama 30 hari untuk keperluan garansi, kemudian dihapus secara permanen dari sistem kami.</span>
-          </li>
-          <li class="flex items-start gap-3">
-            <span class="material-symbols-outlined text-slate-400 shrink-0 mt-1" style="font-size: 20px;">lock</span>
-            <span>Anda dapat meminta penghapusan file desain lebih awal dengan menghubungi kami melalui WhatsApp.</span>
-          </li>
-        </ul>
-      </div>
-
-      {{-- 5. Keamanan Data --}}
-      <div class="group">
-        <h2 class="text-2xl font-bold text-slate-900 mb-4 pb-2 border-b-2 border-slate-100 group-hover:border-slate-300 transition-colors">5. Keamanan Data</h2>
-        <p class="text-slate-600 text-lg leading-relaxed mb-4">
-          Kami menerapkan langkah-langkah keamanan teknis dan organisasional untuk melindungi data Anda dari akses tidak sah, perubahan, pengungkapan, atau perusakan:
-        </p>
-        <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <div class="bg-white border border-slate-200 p-5 rounded-xl shadow-sm hover:shadow-md transition-shadow">
-            <span class="material-symbols-outlined text-slate-800 mb-2 block" style="font-size: 28px;">enhanced_encryption</span>
-            <p class="text-slate-600 text-base">Komunikasi data melalui saluran terenkripsi (HTTPS).</p>
-          </div>
-          <div class="bg-white border border-slate-200 p-5 rounded-xl shadow-sm hover:shadow-md transition-shadow">
-            <span class="material-symbols-outlined text-slate-800 mb-2 block" style="font-size: 28px;">admin_panel_settings</span>
-            <p class="text-slate-600 text-base">Akses terbatas ke data pelanggan hanya untuk staf yang menangani langsung pesanan.</p>
-          </div>
-          <div class="bg-white border border-slate-200 p-5 rounded-xl shadow-sm hover:shadow-md transition-shadow">
-            <span class="material-symbols-outlined text-slate-800 mb-2 block" style="font-size: 28px;">dns</span>
-            <p class="text-slate-600 text-base">Penyimpanan file desain di server dengan proteksi akses berlapis.</p>
-          </div>
-          <div class="bg-white border border-slate-200 p-5 rounded-xl shadow-sm hover:shadow-md transition-shadow">
-            <span class="material-symbols-outlined text-slate-800 mb-2 block" style="font-size: 28px;">policy</span>
-            <p class="text-slate-600 text-base">Peninjauan rutin terhadap praktik dan prosedur keamanan kami.</p>
-          </div>
-        </div>
-        <p class="text-slate-600 text-lg leading-relaxed">
-          Meskipun kami berupaya maksimal, tidak ada metode transmisi data melalui internet yang 100% aman. Kami tidak dapat menjamin keamanan absolut, namun kami berkomitmen untuk terus meningkatkan sistem proteksi kami.
-        </p>
-      </div>
-
-      {{-- 6. Cookie & Pelacakan --}}
-      <div class="group">
-        <h2 class="text-2xl font-bold text-slate-900 mb-4 pb-2 border-b-2 border-slate-100 group-hover:border-slate-300 transition-colors">6. Cookie & Teknologi Pelacakan</h2>
-        <p class="text-slate-600 text-lg leading-relaxed mb-4">
-          Website Pusat Tali Lanyard menggunakan cookie untuk:
-        </p>
-        <ul class="space-y-4 text-slate-600 text-lg leading-relaxed mb-4 ml-2">
-          <li class="flex items-start gap-3">
-            <span class="material-symbols-outlined text-slate-400 shrink-0 mt-1" style="font-size: 20px;">cookie</span>
-            <span>Mengingat preferensi kunjungan Anda (seperti pengaturan tampilan).</span>
-          </li>
-          <li class="flex items-start gap-3">
-            <span class="material-symbols-outlined text-slate-400 shrink-0 mt-1" style="font-size: 20px;">analytics</span>
-            <span>Menganalisis trafik website untuk meningkatkan pengalaman pengguna (Google Analytics).</span>
-          </li>
-          <li class="flex items-start gap-3">
-            <span class="material-symbols-outlined text-slate-400 shrink-0 mt-1" style="font-size: 20px;">web</span>
-            <span>Memastikan semua fungsi esensial website berjalan dengan baik.</span>
-          </li>
-        </ul>
-        <p class="text-slate-600 text-lg leading-relaxed mb-4">
-          Anda dapat menonaktifkan cookie melalui pengaturan browser Anda kapan saja. Namun, beberapa fitur website mungkin tidak berfungsi optimal tanpa cookie.
-        </p>
-      </div>
-
-      {{-- 7. Pembaruan Kebijakan --}}
-      <div class="group">
-        <h2 class="text-2xl font-bold text-slate-900 mb-4 pb-2 border-b-2 border-slate-100 group-hover:border-slate-300 transition-colors">7. Pembaruan Kebijakan Privasi</h2>
-        <p class="text-slate-600 text-lg leading-relaxed mb-4">
-          Kami dapat memperbarui Kebijakan Privasi ini dari waktu ke waktu. Setiap perubahan akan diumumkan melalui halaman ini dengan mencantumkan tanggal pembaruan di bagian atas.
-        </p>
-        <p class="text-slate-600 text-lg leading-relaxed mb-4">
-          Kami mendorong Anda untuk meninjau halaman ini secara berkala agar selalu mengetahui bagaimana kami melindungi data Anda. Penggunaan layanan kami setelah perubahan kebijakan berarti Anda menyetujui kebijakan yang telah diperbarui.
-        </p>
-      </div>
-
-      {{-- 8. Kontak --}}
-      <div class="bg-gradient-to-br from-slate-50 to-slate-100 border border-slate-200 rounded-3xl p-8 md:p-10 shadow-sm mt-16">
-        <h2 class="text-2xl font-bold text-slate-900 mb-4">Pertanyaan Seputar Privasi?</h2>
-        <p class="text-slate-600 text-lg leading-relaxed mb-8 max-w-2xl">
-          Jika Anda memiliki pertanyaan, keberatan, atau permintaan terkait data pribadi Anda, tim kami siap membantu Anda kapan saja:
-        </p>
-        <div class="grid sm:grid-cols-2 gap-6 text-slate-700">
-          <a href="mailto:hello@pusattalilanyard.id" class="flex items-center gap-4 p-4 bg-white rounded-2xl shadow-sm hover:shadow-md transition-shadow group/contact">
-            <div class="w-12 h-12 bg-slate-100 text-slate-800 rounded-full flex items-center justify-center group-hover/contact:bg-slate-800 group-hover/contact:text-white transition-colors">
-              <span class="material-symbols-outlined">mail</span>
-            </div>
-            <div>
-              <p class="text-sm font-semibold text-slate-900 mb-0.5">Email Kami</p>
-              <p class="text-slate-600 text-sm">hello@pusattalilanyard.id</p>
-            </div>
+<div class="info-page privacy-page">
+  <section class="privacy-hero" id="privacy-hero" aria-labelledby="privacy-title">
+    <div class="info-shell privacy-hero__grid">
+      <div class="privacy-hero__content">
+        <p class="info-eyebrow info-eyebrow--badge">Privasi Pelanggan</p>
+        <h1 id="privacy-title">Kebijakan Privasi yang Jelas dan Transparan</h1>
+        <p class="privacy-hero__lead">Ketahui data yang kami perlukan, tujuan penggunaannya, serta cara kami menjaga informasi dan file desain Anda.</p>
+        <div class="info-actions">
+          <a class="info-button info-button--primary" href="#isi-kebijakan">
+            <span>Baca Kebijakan</span>
+            <span class="material-symbols-outlined" aria-hidden="true">expand_more</span>
           </a>
-          <a href="tel:+6282210200700" class="flex items-center gap-4 p-4 bg-white rounded-2xl shadow-sm hover:shadow-md transition-shadow group/contact">
-            <div class="w-12 h-12 bg-slate-100 text-slate-800 rounded-full flex items-center justify-center group-hover/contact:bg-slate-800 group-hover/contact:text-white transition-colors">
-              <span class="material-symbols-outlined">phone</span>
-            </div>
-            <div>
-              <p class="text-sm font-semibold text-slate-900 mb-0.5">Telepon / WhatsApp</p>
-              <p class="text-slate-600 text-sm">+62 822-1020-0700</p>
-            </div>
+          <a class="info-button info-button--secondary" href="{{ $privacyWhatsappUrl }}" target="_blank" rel="noopener noreferrer">
+            <img src="/images/whatsapp.svg" alt="" width="19" height="19" aria-hidden="true">
+            <span>Tanya Tim Kami</span>
           </a>
-          <div class="sm:col-span-2 flex items-start gap-4 p-4 bg-white rounded-2xl shadow-sm">
-            <div class="w-12 h-12 bg-slate-100 text-slate-800 rounded-full flex items-center justify-center shrink-0">
-              <span class="material-symbols-outlined">pin_drop</span>
-            </div>
-            <div>
-              <p class="text-sm font-semibold text-slate-900 mb-0.5">Alamat Kantor</p>
-              <p class="text-slate-600 text-sm leading-relaxed">Jl. Sudirman No. 123, Indonesia Kota, Banten 15111</p>
-            </div>
-          </div>
         </div>
+        <p class="privacy-hero__updated">
+          <span class="material-symbols-outlined" aria-hidden="true">schedule</span>
+          Terakhir diperbarui: Juli 2025
+        </p>
       </div>
 
+      <aside class="privacy-hero__summary" aria-label="Ringkasan komitmen privasi">
+        <span class="privacy-hero__summary-icon material-symbols-outlined" aria-hidden="true">verified_user</span>
+        <h2>Komitmen Kami</h2>
+        <p>Data pelanggan digunakan untuk melayani pesanan dan komunikasi yang berkaitan dengan layanan.</p>
+        <ul>
+          <li><span class="material-symbols-outlined" aria-hidden="true">check_circle</span><span>Data tidak dijual untuk pemasaran pihak ketiga.</span></li>
+          <li><span class="material-symbols-outlined" aria-hidden="true">check_circle</span><span>File desain tidak dijadikan sampel tanpa izin.</span></li>
+          <li><span class="material-symbols-outlined" aria-hidden="true">check_circle</span><span>Permintaan penghapusan dapat diajukan kepada tim.</span></li>
+        </ul>
+      </aside>
     </div>
-  </div>
-</section>
+  </section>
 
-@include('components.cta')
+  <section class="privacy-trust" aria-label="Ringkasan perlindungan data">
+    <div class="info-shell">
+      <ul class="info-trust__list">
+        @foreach($privacyTrust as $item)
+          <li>
+            <span class="info-icon material-symbols-outlined" aria-hidden="true">{{ $item['icon'] }}</span>
+            <span><strong>{{ $item['title'] }}</strong><small>{{ $item['description'] }}</small></span>
+          </li>
+        @endforeach
+      </ul>
+    </div>
+  </section>
+
+  <section class="privacy-content" id="isi-kebijakan" aria-labelledby="privacy-content-title">
+    <div class="info-shell privacy-content__layout">
+      <aside class="privacy-toc" aria-label="Daftar isi kebijakan privasi">
+        <div class="privacy-toc__inner">
+          <p>Daftar Isi</p>
+          <nav>
+            <a href="#pendahuluan">Pendahuluan</a>
+            <a href="#data-dikumpulkan">Data yang dikumpulkan</a>
+            <a href="#penggunaan-data">Penggunaan data</a>
+            <a href="#file-desain">Perlindungan file desain</a>
+            <a href="#keamanan-data">Keamanan data</a>
+            <a href="#cookie">Cookie dan pelacakan</a>
+            <a href="#pembaruan">Pembaruan kebijakan</a>
+          </nav>
+        </div>
+      </aside>
+
+      <div class="privacy-document">
+        <header class="privacy-document__header">
+          <h2 id="privacy-content-title">Bagaimana Kami Mengelola Informasi Anda</h2>
+          <p>Penjelasan berikut berlaku untuk interaksi melalui website, WhatsApp, email, dan komunikasi langsung dengan Lanyard Bekasi.</p>
+        </header>
+
+        <article class="privacy-section" id="pendahuluan">
+          <span class="privacy-section__marker" aria-hidden="true">01</span>
+          <div>
+            <h2>Pendahuluan</h2>
+            <p>Selamat datang di Lanyard Bekasi. Kebijakan Privasi ini menjelaskan komitmen kami dalam menjaga kerahasiaan data dan informasi yang Anda berikan saat menggunakan layanan kami, baik melalui website, WhatsApp, email, maupun komunikasi langsung.</p>
+            <p>Dengan menggunakan layanan Lanyard Bekasi, Anda menyetujui pengumpulan dan penggunaan informasi sesuai dengan kebijakan ini. Jika Anda tidak setuju, mohon untuk tidak menggunakan layanan kami.</p>
+          </div>
+        </article>
+
+        <article class="privacy-section" id="data-dikumpulkan">
+          <span class="privacy-section__marker" aria-hidden="true">02</span>
+          <div>
+            <h2>Informasi yang Kami Kumpulkan</h2>
+            <p>Dalam proses pemesanan lanyard custom, kami dapat mengumpulkan informasi berikut:</p>
+            <ul class="privacy-list">
+              <li><span class="material-symbols-outlined" aria-hidden="true">mail</span><span><strong>Data pribadi.</strong> Nama lengkap, nomor WhatsApp atau telepon, alamat email, dan alamat pengiriman.</span></li>
+              <li><span class="material-symbols-outlined" aria-hidden="true">domain</span><span><strong>Data bisnis atau organisasi.</strong> Nama perusahaan, instansi, sekolah, atau komunitas yang tercantum dalam desain.</span></li>
+              <li><span class="material-symbols-outlined" aria-hidden="true">image</span><span><strong>File desain.</strong> Logo, artwork, mockup, dan file lain yang dikirimkan untuk produksi.</span></li>
+              <li><span class="material-symbols-outlined" aria-hidden="true">receipt_long</span><span><strong>Data pemesanan.</strong> Jenis bahan, kuantitas, warna, aksesori, dan riwayat transaksi.</span></li>
+              <li><span class="material-symbols-outlined" aria-hidden="true">web</span><span><strong>Data teknis.</strong> Alamat IP, jenis browser, halaman yang dikunjungi, dan durasi kunjungan melalui cookie.</span></li>
+            </ul>
+          </div>
+        </article>
+
+        <article class="privacy-section" id="penggunaan-data">
+          <span class="privacy-section__marker" aria-hidden="true">03</span>
+          <div>
+            <h2>Penggunaan Data</h2>
+            <p>Informasi yang kami kumpulkan digunakan untuk:</p>
+            <ul class="privacy-list privacy-list--compact">
+              <li><span class="material-symbols-outlined" aria-hidden="true">arrow_right_alt</span><span>Memproses dan mengelola pesanan lanyard custom dari konsultasi hingga pengiriman.</span></li>
+              <li><span class="material-symbols-outlined" aria-hidden="true">arrow_right_alt</span><span>Berkomunikasi terkait status pesanan, konfirmasi desain, dan estimasi produksi.</span></li>
+              <li><span class="material-symbols-outlined" aria-hidden="true">arrow_right_alt</span><span>Mengirim informasi promo atau pembaruan layanan hanya jika Anda menyetujuinya.</span></li>
+              <li><span class="material-symbols-outlined" aria-hidden="true">arrow_right_alt</span><span>Meningkatkan kualitas layanan dan pengalaman pengguna website.</span></li>
+              <li><span class="material-symbols-outlined" aria-hidden="true">arrow_right_alt</span><span>Memenuhi kewajiban hukum yang berlaku di Republik Indonesia.</span></li>
+            </ul>
+            <div class="privacy-note">
+              <span class="material-symbols-outlined" aria-hidden="true">verified_user</span>
+              <p><strong>Komitmen kami.</strong> Kami tidak menjual, menyewakan, atau membagikan data pribadi Anda kepada pihak ketiga untuk pemasaran tanpa izin eksplisit.</p>
+            </div>
+          </div>
+        </article>
+
+        <article class="privacy-section" id="file-desain">
+          <span class="privacy-section__marker" aria-hidden="true">04</span>
+          <div>
+            <h2>Perlindungan File Desain dan Kekayaan Intelektual</h2>
+            <p>Kami memahami bahwa logo dan desain yang Anda kirimkan adalah aset berharga.</p>
+            <ul class="privacy-list">
+              <li><span class="material-symbols-outlined" aria-hidden="true">lock</span><span>File logo, artwork, dan mockup hanya digunakan untuk keperluan produksi pesanan Anda.</span></li>
+              <li><span class="material-symbols-outlined" aria-hidden="true">lock</span><span>File tidak digunakan kembali, diperbanyak, atau dijadikan sampel tanpa izin tertulis.</span></li>
+              <li><span class="material-symbols-outlined" aria-hidden="true">schedule</span><span>Setelah serah terima, file disimpan selama 30 hari untuk keperluan garansi lalu dihapus dari sistem.</span></li>
+              <li><span class="material-symbols-outlined" aria-hidden="true">delete</span><span>Anda dapat meminta penghapusan file lebih awal melalui WhatsApp.</span></li>
+            </ul>
+          </div>
+        </article>
+
+        <article class="privacy-section" id="keamanan-data">
+          <span class="privacy-section__marker" aria-hidden="true">05</span>
+          <div>
+            <h2>Keamanan Data</h2>
+            <p>Kami menerapkan langkah teknis dan organisasional untuk mengurangi risiko akses, perubahan, pengungkapan, atau perusakan data tanpa izin.</p>
+            <ul class="privacy-security">
+              @foreach($securityMeasures as $item)
+                <li>
+                  <span class="material-symbols-outlined" aria-hidden="true">{{ $item['icon'] }}</span>
+                  <h3>{{ $item['title'] }}</h3>
+                  <p>{{ $item['description'] }}</p>
+                </li>
+              @endforeach
+            </ul>
+            <p>Meskipun kami berupaya maksimal, tidak ada metode transmisi data melalui internet yang sepenuhnya aman. Kami tidak dapat menjamin keamanan absolut, namun terus meningkatkan sistem proteksi yang digunakan.</p>
+          </div>
+        </article>
+
+        <article class="privacy-section" id="cookie">
+          <span class="privacy-section__marker" aria-hidden="true">06</span>
+          <div>
+            <h2>Cookie dan Teknologi Pelacakan</h2>
+            <p>Website Lanyard Bekasi dapat menggunakan cookie untuk mengingat preferensi kunjungan, menganalisis trafik, dan memastikan fungsi esensial website berjalan dengan baik.</p>
+            <p>Anda dapat menonaktifkan cookie melalui pengaturan browser. Beberapa fitur website mungkin tidak berfungsi optimal setelah cookie dinonaktifkan.</p>
+          </div>
+        </article>
+
+        <article class="privacy-section" id="pembaruan">
+          <span class="privacy-section__marker" aria-hidden="true">07</span>
+          <div>
+            <h2>Pembaruan Kebijakan Privasi</h2>
+            <p>Kami dapat memperbarui Kebijakan Privasi ini dari waktu ke waktu. Setiap perubahan akan diumumkan melalui halaman ini dengan mencantumkan tanggal pembaruan di bagian atas.</p>
+            <p>Kami mendorong Anda meninjau halaman ini secara berkala agar mengetahui bagaimana data dilindungi. Penggunaan layanan setelah perubahan berarti Anda menyetujui kebijakan yang telah diperbarui.</p>
+          </div>
+        </article>
+
+      </div>
+    </div>
+  </section>
+
+  <section class="info-cta privacy-cta" aria-labelledby="privacy-cta-title">
+    <div class="info-shell">
+      <div class="info-cta__panel">
+        <div>
+          <h2 id="privacy-cta-title">Masih Memiliki Pertanyaan tentang Data Anda?</h2>
+          <p>Sampaikan pertanyaan atau permintaan Anda. Tim Lanyard Bekasi akan membantu memberikan informasi yang relevan.</p>
+        </div>
+        <a href="{{ $privacyWhatsappUrl }}" target="_blank" rel="noopener noreferrer">
+          <img src="/images/whatsapp.svg" alt="" width="20" height="20" aria-hidden="true">
+          <span>Hubungi via WhatsApp</span>
+          <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>
+        </a>
+      </div>
+    </div>
+  </section>
+</div>
+
 @include('components.footer')
+
+@push('schema')
+  @include('components.schema.privacy')
+@endpush
 @endsection

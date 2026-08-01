@@ -25,12 +25,12 @@ class SecureSettingsTest extends TestCase
 
     public function test_it_leaves_non_secret_settings_plain(): void
     {
-        SecureSettings::put('site_title', 'Pusat Tali Lanyard');
+        SecureSettings::put('site_title', 'Lanyard Bekasi');
 
         $raw = Setting::query()->where('key', 'site_title')->value('value');
 
-        $this->assertSame('Pusat Tali Lanyard', $raw);
-        $this->assertSame('Pusat Tali Lanyard', SecureSettings::get('site_title'));
+        $this->assertSame('Lanyard Bekasi', $raw);
+        $this->assertSame('Lanyard Bekasi', SecureSettings::get('site_title'));
     }
 
     public function test_it_reads_legacy_plaintext_secrets(): void

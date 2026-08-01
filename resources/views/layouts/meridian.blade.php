@@ -54,12 +54,13 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>@yield('title', 'Dashboard') · Pusat Tali Lanyard</title>
-    <link rel="icon" type="image/webp" href="/uploads/pusat-tali-lanyard-favicon.webp" />
-    <link rel="shortcut icon" href="/uploads/pusat-tali-lanyard-favicon.webp" />
+    <title>@yield('title', 'Dashboard') · Lanyard Bekasi</title>
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <script>
       (function () {
-        var color = localStorage.getItem("pusattalilanyard-dashboard-primary");
+        var color = localStorage.getItem("lanyardbekasi-dashboard-primary");
         if (color) document.documentElement.style.setProperty("--meridian-accent", color);
       })();
     </script>
@@ -216,6 +217,12 @@
         height: auto;
         object-fit: contain;
       }
+      .dashboard-brand-logo--full {
+        padding: .4rem .5rem;
+        border-radius: .65rem;
+        background: #172033;
+        box-shadow: inset 0 0 0 1px rgb(255 255 255 / .1);
+      }
       .dashboard-brand-logo--icon {
         display: none;
         width: 2rem;
@@ -237,8 +244,8 @@
       <aside class="sidebar sidebar--lg sidebar--app" data-stisla-sidebar>
         <header class="sidebar__header">
           <a class="sidebar__brand" href="{{ route('dashboard') }}">
-            <img class="dashboard-brand-logo dashboard-brand-logo--full" src="/uploads/pusat-tali-lanyard-logo.webp" alt="Pusat Tali Lanyard" />
-            <img class="dashboard-brand-logo dashboard-brand-logo--icon" src="/uploads/pusat-tali-lanyard-favicon.webp" alt="Pusat Tali Lanyard" />
+            <img class="dashboard-brand-logo dashboard-brand-logo--full" src="/uploads/lanyard-bekasi-logo.webp" alt="Lanyard Bekasi" />
+            <img class="dashboard-brand-logo dashboard-brand-logo--icon" src="/uploads/lanyard-bekasi-favicon.webp" alt="Lanyard Bekasi" />
           </a>
         </header>
 

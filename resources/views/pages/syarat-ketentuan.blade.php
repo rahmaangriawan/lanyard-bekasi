@@ -1,188 +1,259 @@
 @extends('layouts.public')
 
-@section('title', 'Syarat & Ketentuan Layanan Pusat Tali Lanyard')
-@section('meta_description', 'Syarat ketentuan pemesanan lanyard custom Indonesia: hak cipta desain, approval mockup, toleransi warna, pembayaran DP 50%, garansi & kebijakan pembatalan.')
+@section('title', 'Syarat dan Ketentuan Pemesanan | Lanyard Bekasi')
+@section('meta_description', 'Pelajari syarat pemesanan Lanyard Bekasi, persetujuan mockup, DP 50%, toleransi produksi, pengiriman, pembatalan, dan pengajuan garansi.')
+@section('seo_canonical', rtrim(config('app.url', url('/')), '/') . '/syarat-ketentuan')
 @section('seo_noindex', '1')
+
+@push('head')
+  <link rel="stylesheet" href="/css/service-pages.css?v={{ file_exists(public_path('css/service-pages.css')) ? filemtime(public_path('css/service-pages.css')) : 1 }}">
+  <link rel="stylesheet" href="/css/terms-index.css?v={{ file_exists(public_path('css/terms-index.css')) ? filemtime(public_path('css/terms-index.css')) : 1 }}">
+@endpush
 
 @section('content')
 @php
-  $whatsappUrl = 'https://wa.me/6282210200700?text=Halo%20Lanyard%20Indonesia%2C%20saya%20mau%20bertanya%20soal%20syarat%20dan%20ketentuan%20pemesanan.';
+  $termsWhatsappUrl = 'https://wa.me/6282210200700?text='.rawurlencode('Halo Lanyard Bekasi, saya ingin berkonsultasi mengenai syarat pemesanan lanyard custom.');
+
+  $termsTrust = [
+    ['icon' => 'design_services', 'title' => 'Mockup Disetujui', 'description' => 'Diperiksa sebelum produksi'],
+    ['icon' => 'receipt_long', 'title' => 'DP Minimal 50%', 'description' => 'Produksi dimulai setelah pembayaran'],
+    ['icon' => 'palette', 'title' => 'Toleransi Dijelaskan', 'description' => 'Warna dan jahitan memiliki batas'],
+    ['icon' => 'verified', 'title' => 'Klaim 3x24 Jam', 'description' => 'Disertai dokumentasi unboxing'],
+  ];
+
+  $termsHighlights = [
+    ['icon' => 'design_services', 'title' => 'Periksa Mockup', 'description' => 'Pastikan ejaan, logo, warna, font, dan tata letak sudah sesuai sebelum memberikan persetujuan.'],
+    ['icon' => 'receipt_long', 'title' => 'Pahami Pembayaran', 'description' => 'Produksi dimulai setelah DP minimal 50% diterima dan pesanan dilunasi sebelum dikirim.'],
+    ['icon' => 'palette', 'title' => 'Kenali Toleransi', 'description' => 'Perbedaan warna 5 sampai 10 persen dan pergeseran jahitan 1 sampai 2 mm termasuk batas produksi.'],
+    ['icon' => 'verified', 'title' => 'Simpan Bukti', 'description' => 'Dokumentasikan unboxing dan ajukan kendala maksimal 3x24 jam setelah paket diterima.'],
+  ];
+
+  $productionTerms = [
+    ['icon' => 'palette', 'title' => 'Toleransi Warna', 'description' => 'Tampilan RGB pada layar dapat berbeda dengan hasil pada kain. Deviasi 5 sampai 10 persen merupakan toleransi produksi sublimasi.'],
+    ['icon' => 'design_services', 'title' => 'Pemotongan dan Jahitan', 'description' => 'Perakitan melibatkan proses manual. Pergeseran jahitan atau pemotongan 1 sampai 2 mm termasuk batas wajar produksi.'],
+    ['icon' => 'schedule', 'title' => 'Estimasi Produksi', 'description' => 'Waktu produksi dihitung setelah DP diterima dan mockup disetujui, bukan sejak percakapan pertama.'],
+    ['icon' => 'inventory', 'title' => 'Proofing atau Sampling', 'description' => 'Untuk pesanan di atas 1.000 pcs, sample fisik dapat disepakati terlebih dahulu untuk meninjau hasil.'],
+  ];
 @endphp
 
-{{-- Hero --}}
-<section class="py-16 sm:py-20 border-b border-slate-200" style="background-color: #F4F6FA;">
-  <div class="mx-auto max-w-[1280px] px-6 lg:px-10">
-    <p class="inline-flex items-center gap-2 bg-white text-slate-700 px-4 py-2 rounded-full border border-slate-200 text-sm font-bold mb-6">
-      <span class="material-symbols-outlined text-base" style="font-variation-settings: 'FILL' 1;">gavel</span>
-      Legal & Ketentuan
-    </p>
-
-    <h1 class="font-bold leading-[1.08] text-slate-900 mb-6" style="font-size: clamp(2rem, 4vw, 3rem);">
-      Syarat & Ketentuan Layanan
-    </h1>
-
-    <p class="text-slate-600 text-base md:text-lg leading-relaxed mb-8 max-w-2xl">
-      Syarat dan ketentuan ini mengatur penggunaan layanan dan proses pemesanan cetak lanyard custom di Pusat Tali Lanyard. Harap membacanya dengan saksama sebelum melakukan pemesanan.
-    </p>
-
-    <p class="text-sm text-slate-500">Terakhir diperbarui: Juli 2025</p>
-  </div>
-</section>
-
-{{-- Content --}}
-<section class="bg-white py-16 sm:py-20">
-  <div class="mx-auto max-w-[1000px] px-6 lg:px-10">
-    <div class="max-w-none space-y-12">
-
-      {{-- 1. Ketentuan Umum --}}
-      <div class="group">
-        <h2 class="text-2xl font-bold text-slate-900 mb-4 pb-2 border-b-2 border-slate-100 group-hover:border-slate-300 transition-colors">1. Ketentuan Umum</h2>
-        <p class="text-slate-600 text-lg leading-relaxed mb-4">
-          Dengan melakukan pemesanan di Pusat Tali Lanyard, Anda (selanjutnya disebut "Klien" atau "Pemesan") setuju untuk terikat dan mematuhi seluruh Syarat dan Ketentuan yang tertulis di halaman ini. Ketentuan ini berlaku mengikat sebagai bentuk kesepakatan transaksi jual beli jasa cetak.
-        </p>
-      </div>
-
-      {{-- 2. Hak Cipta & Hak Milik Desain --}}
-      <div class="group">
-        <h2 class="text-2xl font-bold text-slate-900 mb-4 pb-2 border-b-2 border-slate-100 group-hover:border-slate-300 transition-colors">2. Hak Cipta & Orisinalitas Desain</h2>
-        <p class="text-slate-600 text-lg leading-relaxed mb-4">
-          Dalam hal klien memberikan file desain siap cetak atau elemen desain (seperti logo, ikon, font):
-        </p>
-        <ul class="space-y-4 text-slate-600 text-lg leading-relaxed mb-4 ml-2">
-          <li class="flex items-start gap-3">
-            <span class="material-symbols-outlined text-slate-400 shrink-0 mt-1" style="font-size: 20px;">copyright</span>
-            <span>Klien menjamin bahwa seluruh materi yang diserahkan tidak melanggar hak cipta, merek dagang, atau kekayaan intelektual pihak ketiga mana pun.</span>
-          </li>
-          <li class="flex items-start gap-3">
-            <span class="material-symbols-outlined text-slate-400 shrink-0 mt-1" style="font-size: 20px;">gavel</span>
-            <span>Pusat Tali Lanyard dibebaskan dari segala bentuk tuntutan hukum apabila terjadi pelanggaran hak cipta atas desain yang diberikan oleh klien.</span>
-          </li>
-          <li class="flex items-start gap-3">
-            <span class="material-symbols-outlined text-slate-400 shrink-0 mt-1" style="font-size: 20px;">design_services</span>
-            <span>Desain lanyard yang dibuatkan oleh tim Pusat Tali Lanyard (jika menggunakan layanan desain gratis/berbayar kami) sepenuhnya menjadi hak milik klien setelah transaksi selesai dan lunas.</span>
-          </li>
-        </ul>
-      </div>
-
-      {{-- 3. Persetujuan Desain (Mockup Approval) --}}
-      <div class="group">
-        <h2 class="text-2xl font-bold text-slate-900 mb-4 pb-2 border-b-2 border-slate-100 group-hover:border-slate-300 transition-colors">3. Persetujuan Desain (Mockup Approval)</h2>
-        <div class="bg-blue-50 border border-blue-100 p-5 rounded-xl mb-6">
-          <p class="text-slate-700 text-lg leading-relaxed font-medium">
-            Persetujuan desain (Mockup Approval) adalah tahap paling krusial sebelum masuk antrean produksi.
-          </p>
+<div class="info-page terms-page">
+  <section class="terms-hero" id="terms-hero" aria-labelledby="terms-title">
+    <div class="info-shell terms-hero__grid">
+      <div class="terms-hero__content">
+        <p class="info-eyebrow info-eyebrow--badge">Syarat Pemesanan Lanyard</p>
+        <h1 id="terms-title">Syarat yang Jelas Sebelum Pesanan Diproduksi</h1>
+        <p class="terms-hero__lead">Pahami persetujuan desain, pembayaran, toleransi produksi, pengiriman, dan garansi sebelum menyetujui pesanan.</p>
+        <div class="info-actions">
+          <a class="info-button info-button--primary" href="{{ $termsWhatsappUrl }}" target="_blank" rel="noopener noreferrer">
+            <img src="/images/whatsapp.svg" alt="" width="19" height="19" aria-hidden="true">
+            <span>Mulai Konsultasi</span>
+          </a>
+          <a class="info-button info-button--secondary" href="{{ route('ordering') }}">
+            <span>Cara Pemesanan</span>
+            <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>
+          </a>
         </div>
-        <ul class="space-y-4 text-slate-600 text-lg leading-relaxed mb-4 ml-2">
-          <li class="flex items-start gap-3">
-            <span class="material-symbols-outlined text-slate-400 shrink-0 mt-1" style="font-size: 20px;">rule</span>
-            <span>Tim kami akan selalu mengirimkan visualisasi desain final (mockup 2D/3D) untuk dikonfirmasi melalui WhatsApp atau Email sebelum masuk mesin cetak.</span>
-          </li>
-          <li class="flex items-start gap-3">
-            <span class="material-symbols-outlined text-slate-400 shrink-0 mt-1" style="font-size: 20px;">rule</span>
-            <span>Pemesan wajib memeriksa kembali seluruh detail, termasuk <strong class="text-slate-800 font-semibold">ejaan teks, posisi logo, jenis font, dan tata letak</strong>.</span>
-          </li>
-          <li class="flex items-start gap-3">
-            <span class="material-symbols-outlined text-slate-400 shrink-0 mt-1" style="font-size: 20px;">rule</span>
-            <span>Kesalahan cetak yang terjadi <strong class="text-slate-800 font-semibold">setelah</strong> mockup disetujui (ACC) sepenuhnya menjadi tanggung jawab pemesan, dan Pusat Tali Lanyard tidak menerima komplain cetak ulang untuk kasus ini.</span>
-          </li>
-        </ul>
-      </div>
-
-      {{-- 4. Produksi & Toleransi Warna --}}
-      <div class="group">
-        <h2 class="text-2xl font-bold text-slate-900 mb-4 pb-2 border-b-2 border-slate-100 group-hover:border-slate-300 transition-colors">4. Proses Produksi & Toleransi Warna Cetak</h2>
-        <p class="text-slate-600 text-lg leading-relaxed mb-4">
-          Kami menggunakan teknologi cetak sublimasi digital standar industri. Namun, mohon dipahami terkait hal teknis berikut:
+        <p class="terms-hero__updated">
+          <span class="material-symbols-outlined" aria-hidden="true">schedule</span>
+          Terakhir diperbarui: 31 Juli 2026
         </p>
-        <div class="grid sm:grid-cols-2 gap-4 mb-6">
-          <div class="bg-white border border-slate-200 p-5 rounded-xl shadow-sm hover:shadow-md transition-shadow">
-            <span class="material-symbols-outlined text-slate-800 mb-2 block" style="font-size: 28px;">palette</span>
-            <p class="text-slate-900 font-semibold mb-1">Toleransi Deviasi Warna (± 5-10%)</p>
-            <p class="text-slate-600 text-base">Warna pada layar HP/Monitor (RGB) selalu sedikit berbeda dengan hasil cetak kain (CMYK). Penurunan akurasi hingga 10% adalah wajar dalam industri sublimasi.</p>
-          </div>
-          <div class="bg-white border border-slate-200 p-5 rounded-xl shadow-sm hover:shadow-md transition-shadow">
-            <span class="material-symbols-outlined text-slate-800 mb-2 block" style="font-size: 28px;">precision_manufacturing</span>
-            <p class="text-slate-900 font-semibold mb-1">Toleransi Pemotongan & Jahitan</p>
-            <p class="text-slate-600 text-base">Proses perakitan lanyard melibatkan jahitan dan pemotongan manual. Toleransi pergeseran jahitan sekitar 1-2 mm merupakan batas wajar produksi.</p>
-          </div>
-          <div class="bg-white border border-slate-200 p-5 rounded-xl shadow-sm hover:shadow-md transition-shadow">
-            <span class="material-symbols-outlined text-slate-800 mb-2 block" style="font-size: 28px;">schedule</span>
-            <p class="text-slate-900 font-semibold mb-1">Estimasi Waktu Pengerjaan</p>
-            <p class="text-slate-600 text-base">SLA (Service Level Agreement) waktu produksi dihitung sejak <strong class="text-slate-900">Pembayaran DP diterima</strong> dan <strong class="text-slate-900">Desain di-ACC</strong> (bukan dari saat chat pertama).</p>
-          </div>
-          <div class="bg-white border border-slate-200 p-5 rounded-xl shadow-sm hover:shadow-md transition-shadow">
-            <span class="material-symbols-outlined text-slate-800 mb-2 block" style="font-size: 28px;">inventory</span>
-            <p class="text-slate-900 font-semibold mb-1">Proofing / Sampling</p>
-            <p class="text-slate-600 text-base">Untuk order di atas 1.000 pcs, kami sarankan request cetak sample fisik 1 pcs (berbayar/gratis tergantung kesepakatan) untuk memastikan hasil akhir sesuai ekspektasi.</p>
-          </div>
-        </div>
       </div>
 
-      {{-- 5. Sistem Pembayaran --}}
-      <div class="group">
-        <h2 class="text-2xl font-bold text-slate-900 mb-4 pb-2 border-b-2 border-slate-100 group-hover:border-slate-300 transition-colors">5. Sistem Pembayaran</h2>
-        <ul class="space-y-4 text-slate-600 text-lg leading-relaxed mb-6 ml-2">
-          <li class="flex items-start gap-3">
-            <span class="material-symbols-outlined text-slate-400 shrink-0 mt-1" style="font-size: 20px;">account_balance_wallet</span>
-            <span><strong class="text-slate-800 font-semibold">Down Payment (DP):</strong> Pesanan baru akan diproses produksinya setelah pihak Klien membayarkan Uang Muka (DP) minimal 50% dari total invoice.</span>
-          </li>
-          <li class="flex items-start gap-3">
-            <span class="material-symbols-outlined text-slate-400 shrink-0 mt-1" style="font-size: 20px;">account_balance_wallet</span>
-            <span><strong class="text-slate-800 font-semibold">Pelunasan:</strong> Sisa tagihan 50% wajib dilunasi <strong class="text-slate-800">sebelum</strong> barang dikirimkan via ekspedisi atau diambil di workshop kami. Kami akan mengirimkan foto/video barang jadi sebagai bukti kesiapan barang.</span>
-          </li>
-          <li class="flex items-start gap-3">
-            <span class="material-symbols-outlined text-slate-400 shrink-0 mt-1" style="font-size: 20px;">account_balance_wallet</span>
-            <span><strong class="text-slate-800 font-semibold">Faktur / Invoice Resmi:</strong> Semua pembayaran diwajibkan melalui rekening bank resmi atas nama usaha/perusahaan kami, bukan perorangan yang tidak terafiliasi.</span>
-          </li>
+      <aside class="terms-hero__summary" aria-label="Ringkasan syarat utama">
+        <span class="terms-hero__summary-icon material-symbols-outlined" aria-hidden="true">verified_user</span>
+        <h2>Empat Hal Penting</h2>
+        <p>Pastikan poin berikut dipahami sebelum pesanan masuk antrean produksi.</p>
+        <ul>
+          <li><span class="material-symbols-outlined" aria-hidden="true">check_circle</span><span>Produksi dimulai setelah mockup disetujui.</span></li>
+          <li><span class="material-symbols-outlined" aria-hidden="true">check_circle</span><span>DP minimal 50% diperlukan untuk memproses pesanan.</span></li>
+          <li><span class="material-symbols-outlined" aria-hidden="true">check_circle</span><span>Hasil produksi memiliki toleransi teknis.</span></li>
+          <li><span class="material-symbols-outlined" aria-hidden="true">check_circle</span><span>Klaim wajib diajukan maksimal 3x24 jam.</span></li>
         </ul>
-      </div>
-
-      {{-- 6. Pengiriman --}}
-      <div class="group">
-        <h2 class="text-2xl font-bold text-slate-900 mb-4 pb-2 border-b-2 border-slate-100 group-hover:border-slate-300 transition-colors">6. Pengiriman & Keterlambatan Logistik</h2>
-        <p class="text-slate-600 text-lg leading-relaxed mb-4">
-          Pusat Tali Lanyard akan memastikan pesanan diserahkan ke pihak ekspedisi atau kurir tepat waktu sesuai dengan tenggat (deadline) kesepakatan produksi. Namun, mohon diperhatikan:
-        </p>
-        <ul class="space-y-4 text-slate-600 text-lg leading-relaxed mb-4 ml-2">
-          <li class="flex items-start gap-3">
-            <span class="material-symbols-outlined text-slate-400 shrink-0 mt-1" style="font-size: 20px;">local_shipping</span>
-            <span>Setelah barang diserahkan ke pihak ketiga (JNE, TIKI, SiCepat, Gosend, Grab, Paxel, dll) beserta nomor resi, tanggung jawab pengiriman beralih ke perusahaan logistik tersebut.</span>
-          </li>
-          <li class="flex items-start gap-3">
-            <span class="material-symbols-outlined text-slate-400 shrink-0 mt-1" style="font-size: 20px;">local_shipping</span>
-            <span>Keterlambatan, kehilangan, atau kerusakan paket akibat kelalaian kurir logistik berada di luar kendali dan tanggung jawab kami, namun kami akan membantu proses follow-up dan klaim asuransi jika menggunakan asuransi pengiriman.</span>
-          </li>
-        </ul>
-      </div>
-
-      {{-- 7. Pembatalan & Garansi --}}
-      <div class="group">
-        <h2 class="text-2xl font-bold text-slate-900 mb-4 pb-2 border-b-2 border-slate-100 group-hover:border-slate-300 transition-colors">7. Pembatalan & Garansi Komplain</h2>
-        <div class="bg-slate-50 border-l-4 border-red-500 p-5 rounded-r-xl mb-6">
-          <p class="text-slate-700 text-lg leading-relaxed">
-            <strong class="text-slate-900 font-semibold">Kebijakan Pembatalan:</strong> Pesanan tidak dapat dibatalkan atau dikembalikan (refund) dan Down Payment (DP) hangus secara otomatis jika pesanan <strong class="text-red-700 font-semibold">sudah masuk tahap produksi (kain sudah dipotong atau dicetak)</strong>.
-          </p>
-        </div>
-        <ul class="space-y-4 text-slate-600 text-lg leading-relaxed mb-4 ml-2">
-          <li class="flex items-start gap-3">
-            <span class="material-symbols-outlined text-slate-400 shrink-0 mt-1" style="font-size: 20px;">verified</span>
-            <span><strong class="text-slate-800 font-semibold">Garansi Cetak Ulang:</strong> Kami memberikan garansi ganti baru 100% jika terjadi cacat produksi major (misal: warna sablon pudar ekstrem, tali putus, stopper rusak) yang murni kesalahan QC kami.</span>
-          </li>
-          <li class="flex items-start gap-3">
-            <span class="material-symbols-outlined text-slate-400 shrink-0 mt-1" style="font-size: 20px;">verified</span>
-            <span><strong class="text-slate-800 font-semibold">Batas Waktu Klaim:</strong> Segala bentuk komplain dan pengajuan garansi wajib dikirimkan dalam kurun waktu maksimal <strong class="text-slate-800">3x24 jam</strong> setelah status tracking kurir menunjukkan barang telah diterima.</span>
-          </li>
-          <li class="flex items-start gap-3">
-            <span class="material-symbols-outlined text-slate-400 shrink-0 mt-1" style="font-size: 20px;">verified</span>
-            <span>Diperlukan bukti berupa foto/video unboxing yang jelas untuk proses validasi klaim.</span>
-          </li>
-        </ul>
-      </div>
-
+      </aside>
     </div>
-  </div>
-</section>
+  </section>
 
-@include('components.cta')
+  <section class="terms-trust" aria-label="Ringkasan ketentuan pemesanan">
+    <div class="info-shell">
+      <ul class="info-trust__list">
+        @foreach($termsTrust as $item)
+          <li>
+            <span class="info-icon material-symbols-outlined" aria-hidden="true">{{ $item['icon'] }}</span>
+            <span><strong>{{ $item['title'] }}</strong><small>{{ $item['description'] }}</small></span>
+          </li>
+        @endforeach
+      </ul>
+    </div>
+  </section>
+
+  <section class="terms-overview" id="ringkasan-syarat" aria-labelledby="terms-overview-title">
+    <div class="info-shell">
+      <header class="info-heading">
+        <p class="info-eyebrow">Sebelum Memesan</p>
+        <h2 id="terms-overview-title">Periksa Empat Tahap yang Paling Menentukan</h2>
+        <p>Ringkasan ini membantu Anda memahami keputusan penting sebelum membaca ketentuan lengkap.</p>
+      </header>
+      <ul class="terms-overview__grid">
+        @foreach($termsHighlights as $item)
+          <li>
+            <span class="material-symbols-outlined" aria-hidden="true">{{ $item['icon'] }}</span>
+            <h3>{{ $item['title'] }}</h3>
+            <p>{{ $item['description'] }}</p>
+          </li>
+        @endforeach
+      </ul>
+    </div>
+  </section>
+
+  <section class="terms-content" id="isi-ketentuan" aria-labelledby="terms-content-title">
+    <div class="info-shell terms-content__layout">
+      <aside class="terms-toc" aria-label="Daftar isi syarat dan ketentuan">
+        <div class="terms-toc__inner">
+          <p>Daftar Isi</p>
+          <nav>
+            <a href="#ketentuan-umum">Ketentuan umum</a>
+            <a href="#hak-cipta">Hak cipta dan desain</a>
+            <a href="#persetujuan-mockup">Persetujuan mockup</a>
+            <a href="#produksi-toleransi">Produksi dan toleransi</a>
+            <a href="#pembayaran">Sistem pembayaran</a>
+            <a href="#ketentuan-pengiriman">Pengiriman</a>
+            <a href="#pembatalan-garansi">Pembatalan dan garansi</a>
+          </nav>
+        </div>
+      </aside>
+
+      <div class="terms-document">
+        <header class="terms-document__header">
+          <h2 id="terms-content-title">Ketentuan Lengkap Pemesanan Lanyard Custom</h2>
+          <p>Ketentuan berikut menjadi dasar kesepakatan antara Lanyard Bekasi dan pemesan selama proses desain, produksi, pembayaran, serta pengiriman.</p>
+        </header>
+
+        <article class="terms-section" id="ketentuan-umum">
+          <span class="terms-section__marker" aria-hidden="true">01</span>
+          <div>
+            <h2>Ketentuan Umum</h2>
+            <p>Dengan melakukan pemesanan di Lanyard Bekasi, Anda sebagai klien atau pemesan setuju untuk terikat dan mematuhi seluruh Syarat dan Ketentuan di halaman ini. Ketentuan berlaku sebagai kesepakatan transaksi jasa cetak.</p>
+          </div>
+        </article>
+
+        <article class="terms-section" id="hak-cipta">
+          <span class="terms-section__marker" aria-hidden="true">02</span>
+          <div>
+            <h2>Hak Cipta dan Orisinalitas Desain</h2>
+            <p>Jika klien memberikan file siap cetak atau elemen seperti logo, ikon, dan font, ketentuan berikut berlaku:</p>
+            <ul class="terms-list">
+              <li><span class="material-symbols-outlined" aria-hidden="true">image</span><span>Klien menjamin materi yang diserahkan tidak melanggar hak cipta, merek dagang, atau kekayaan intelektual pihak lain.</span></li>
+              <li><span class="material-symbols-outlined" aria-hidden="true">policy</span><span>Lanyard Bekasi dibebaskan dari tuntutan hukum yang muncul akibat pelanggaran atas desain yang diberikan klien.</span></li>
+              <li><span class="material-symbols-outlined" aria-hidden="true">design_services</span><span>Desain yang dibuat oleh tim Lanyard Bekasi menjadi hak milik klien setelah transaksi selesai dan lunas.</span></li>
+            </ul>
+          </div>
+        </article>
+
+        <article class="terms-section" id="persetujuan-mockup">
+          <span class="terms-section__marker" aria-hidden="true">03</span>
+          <div>
+            <h2>Persetujuan Desain dan Mockup</h2>
+            <div class="terms-note">
+              <span class="material-symbols-outlined" aria-hidden="true">verified</span>
+              <p><strong>Persetujuan mockup adalah tahap penting.</strong> Pesanan belum masuk antrean produksi sebelum desain final disetujui.</p>
+            </div>
+            <ul class="terms-list terms-list--compact">
+              <li><span class="material-symbols-outlined" aria-hidden="true">check_circle</span><span>Tim mengirim visualisasi desain final melalui WhatsApp atau email sebelum produksi.</span></li>
+              <li><span class="material-symbols-outlined" aria-hidden="true">check_circle</span><span>Pemesan wajib memeriksa ejaan, posisi logo, jenis font, warna, dan tata letak.</span></li>
+              <li><span class="material-symbols-outlined" aria-hidden="true">check_circle</span><span>Kesalahan isi atau tata letak pada mockup yang sudah disetujui menjadi tanggung jawab pemesan dan tidak termasuk garansi produksi.</span></li>
+            </ul>
+          </div>
+        </article>
+
+        <article class="terms-section" id="produksi-toleransi">
+          <span class="terms-section__marker" aria-hidden="true">04</span>
+          <div>
+            <h2>Proses Produksi dan Toleransi</h2>
+            <p>Produksi menggunakan cetak sublimasi digital dan proses perakitan yang sebagian dilakukan secara manual.</p>
+            <ul class="terms-production">
+              @foreach($productionTerms as $item)
+                <li>
+                  <span class="material-symbols-outlined" aria-hidden="true">{{ $item['icon'] }}</span>
+                  <h3>{{ $item['title'] }}</h3>
+                  <p>{{ $item['description'] }}</p>
+                </li>
+              @endforeach
+            </ul>
+          </div>
+        </article>
+
+        <article class="terms-section" id="pembayaran">
+          <span class="terms-section__marker" aria-hidden="true">05</span>
+          <div>
+            <h2>Sistem Pembayaran</h2>
+            <ul class="terms-list">
+              <li><span class="material-symbols-outlined" aria-hidden="true">receipt_long</span><span><strong>Down Payment.</strong> Pesanan diproses setelah klien membayar DP minimal 50% dari total invoice.</span></li>
+              <li><span class="material-symbols-outlined" aria-hidden="true">verified</span><span><strong>Pelunasan.</strong> Sisa tagihan wajib dilunasi sebelum barang dikirim atau diambil. Tim dapat mengirim foto atau video barang jadi sebagai bukti kesiapan.</span></li>
+              <li><span class="material-symbols-outlined" aria-hidden="true">mail</span><span><strong>Invoice resmi.</strong> Pembayaran dilakukan melalui rekening resmi usaha atau perusahaan yang diinformasikan dalam invoice.</span></li>
+            </ul>
+          </div>
+        </article>
+
+        <article class="terms-section" id="ketentuan-pengiriman">
+          <span class="terms-section__marker" aria-hidden="true">06</span>
+          <div>
+            <h2>Pengiriman dan Logistik</h2>
+            <p>Lanyard Bekasi menyerahkan pesanan kepada ekspedisi atau kurir setelah produksi, quality control, pengemasan, dan pelunasan selesai.</p>
+            <ul class="terms-list terms-list--compact">
+              <li><span class="material-symbols-outlined" aria-hidden="true">local_shipping</span><span>Nomor resi dibagikan setelah paket diserahkan kepada ekspedisi agar status pengiriman dapat dipantau.</span></li>
+              <li><span class="material-symbols-outlined" aria-hidden="true">local_shipping</span><span>Keterlambatan, kehilangan, atau kerusakan oleh kurir berada di luar proses produksi. Tim membantu follow-up dan klaim asuransi apabila pengiriman menggunakan asuransi.</span></li>
+            </ul>
+            <a class="terms-inline-link" href="{{ route('shipping') }}">
+              <span>Lihat informasi pengiriman</span>
+              <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>
+            </a>
+          </div>
+        </article>
+
+        <article class="terms-section" id="pembatalan-garansi">
+          <span class="terms-section__marker" aria-hidden="true">07</span>
+          <div>
+            <h2>Pembatalan dan Garansi</h2>
+            <div class="terms-note terms-note--warning">
+              <span class="material-symbols-outlined" aria-hidden="true">info</span>
+              <p><strong>Kebijakan pembatalan.</strong> Pesanan tidak dapat dibatalkan atau dikembalikan dan DP dinyatakan hangus setelah produksi dimulai, termasuk ketika kain sudah dipotong atau dicetak.</p>
+            </div>
+            <ul class="terms-list terms-list--compact">
+              <li><span class="material-symbols-outlined" aria-hidden="true">verified</span><span>Cacat produksi major seperti cetak pudar ekstrem, tali putus, atau stopper rusak dapat diajukan untuk diperiksa.</span></li>
+              <li><span class="material-symbols-outlined" aria-hidden="true">schedule</span><span>Komplain wajib diajukan maksimal 3x24 jam setelah status pengiriman menunjukkan paket diterima.</span></li>
+              <li><span class="material-symbols-outlined" aria-hidden="true">image</span><span>Pengajuan harus disertai foto dan video unboxing yang memperlihatkan kondisi paket serta produk dengan jelas.</span></li>
+              <li><span class="material-symbols-outlined" aria-hidden="true">policy</span><span>Tim menentukan penyelesaian berdasarkan bukti, spesifikasi yang disetujui, toleransi produksi, dan hasil validasi.</span></li>
+            </ul>
+            <a class="terms-inline-link" href="{{ route('warranty') }}">
+              <span>Baca cakupan garansi</span>
+              <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>
+            </a>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="info-cta terms-cta" id="terms-cta" aria-labelledby="terms-cta-title">
+    <div class="info-shell">
+      <div class="info-cta__panel">
+        <div>
+          <h2 id="terms-cta-title">Siap Membahas Spesifikasi Pesanan Anda?</h2>
+          <p>Konsultasikan jumlah, bahan, aksesori, desain, dan target waktu agar quotation dapat disiapkan dengan jelas.</p>
+        </div>
+        <a href="{{ $termsWhatsappUrl }}" target="_blank" rel="noopener noreferrer">
+          <img src="/images/whatsapp.svg" alt="" width="20" height="20" aria-hidden="true">
+          <span>Konsultasi via WhatsApp</span>
+          <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>
+        </a>
+      </div>
+    </div>
+  </section>
+</div>
+
 @include('components.footer')
+
+@push('schema')
+  @include('components.schema.terms')
+@endpush
 @endsection

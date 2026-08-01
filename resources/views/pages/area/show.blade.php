@@ -2,7 +2,7 @@
 
 @php($safeContent = \App\Support\HtmlSanitizer::clean($cityPage->content ?? ''))
 
-@section('title', $cityPage->metaTitle ?: $cityPage->title.' | Pusat Tali Lanyard')
+@section('title', $cityPage->metaTitle ?: $cityPage->title.' | Lanyard Bekasi')
 @section('meta_description', $cityPage->metaDescription ?: 'Layanan cetak lanyard custom untuk '.$cityPage->title.'. Konsultasi kebutuhan event, kantor, sekolah, dan komunitas Anda.')
 @section('seo_canonical', rtrim(config('app.url', url('/')), '/').'/area/'.$cityPage->slug)
 @if($cityPage->featuredImage)

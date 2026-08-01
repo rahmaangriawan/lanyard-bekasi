@@ -1,4 +1,4 @@
-name: Deploy Pusat Tali Lanyard
+name: Deploy Lanyard Bekasi
 
 on:
   push:
@@ -15,9 +15,9 @@ permissions:
 
 env:
   PHP_VERSION: "8.3"
-  DEPLOY_PATH: ${{ vars.DEPLOY_PATH || '/home/pusattalilanyard/htdocs/pusattalilanyard.com' }}
+  DEPLOY_PATH: ${{ vars.DEPLOY_PATH || '/home/lanyardbekasi/htdocs/lanyardbekasi.com' }}
   PHP_BIN: ${{ vars.PHP_BIN || '/usr/bin/php8.3' }}
-  HEALTHCHECK_URL: ${{ vars.HEALTHCHECK_URL || 'https://pusattalilanyard.com/' }}
+  HEALTHCHECK_URL: ${{ vars.HEALTHCHECK_URL || 'https://lanyardbekasi.com/' }}
 
 jobs:
   test-and-build:
@@ -79,6 +79,7 @@ jobs:
             --exclude '.github/' \
             --exclude '.env' \
             --exclude '.env.*' \
+            --exclude '*.sql' \
             --exclude 'deploy-package/' \
             --exclude 'deploy.tar.gz' \
             --exclude 'node_modules/' \
@@ -136,7 +137,7 @@ jobs:
             -o ConnectTimeout=15 \
             -P "$SSH_PORT" \
             deploy.tar.gz \
-            "$SSH_USER@$SSH_HOST:deploy-pusattalilanyard.tar.gz"
+            "$SSH_USER@$SSH_HOST:deploy-lanyard-bekasi.tar.gz"
 
       - name: Install release
         env:
@@ -158,8 +159,8 @@ jobs:
 
           APP_DIR="$1"
           PHP_BIN="$2"
-          ARCHIVE="$HOME/deploy-pusattalilanyard.tar.gz"
-          STAGING_DIR="$HOME/.deploy-pusattalilanyard-${GITHUB_RUN_ID:-manual}-$$"
+          ARCHIVE="$HOME/deploy-lanyard-bekasi.tar.gz"
+          STAGING_DIR="$HOME/.deploy-lanyard-bekasi-${GITHUB_RUN_ID:-manual}-$$"
           MAINTENANCE_ACTIVE=0
 
           cleanup() {
@@ -182,7 +183,7 @@ jobs:
           test -d "$STAGING_DIR/public/build"
 
           if [ ! -f "$APP_DIR/.env" ]; then
-            echo "ERROR: $APP_DIR/.env belum tersedia. Buat dari CloudPanel sebelum deploy." >&2
+            echo "ERROR: $APP_DIR/.env belum tersedia. Buat dari .env.example sebelum deploy." >&2
             exit 1
           fi
 
@@ -190,8 +191,7 @@ jobs:
           "$PHP_BIN" artisan down --retry=10 --refresh=15 || true
           MAINTENANCE_ACTIVE=1
 
-          # Application code is replaced, while runtime data and CMS uploads
-          # remain on the server.
+          # Application code is replaced while runtime data and CMS uploads remain.
           rsync -r --checksum --delete \
             --no-times --no-perms --no-owner --no-group --omit-dir-times \
             --exclude '.env' \
@@ -200,8 +200,7 @@ jobs:
             --exclude 'public/uploads/' \
             "$STAGING_DIR/" "$APP_DIR/"
 
-          # Repository-owned seed images are copied without deleting uploads
-          # created through the production CMS.
+          # Repository-owned seed images are copied without deleting CMS uploads.
           if [ -d "$STAGING_DIR/public/uploads" ]; then
             mkdir -p "$APP_DIR/public/uploads"
             rsync -r --checksum \
@@ -251,17 +250,13 @@ jobs:
 
           if ! ENV_FILE="$APP_DIR/.env" "$PHP_BIN" -r '
             $contents = file_get_contents(getenv("ENV_FILE"));
-
             if (! preg_match("/^APP_KEY=(.*)$/m", $contents, $matches)) {
                 exit(1);
             }
-
             $key = trim(trim($matches[1]), "\"\x27");
-
             if (str_starts_with($key, "base64:")) {
                 $key = base64_decode(substr($key, 7), true);
             }
-
             exit(is_string($key) && strlen($key) === 32 ? 0 : 1);
           '; then
             echo "APP_KEY belum valid; membuat application key production."
@@ -269,14 +264,11 @@ jobs:
           fi
 
           "$PHP_BIN" artisan migrate --force --no-interaction
-          "$PHP_BIN" artisan content:import-initial --no-interaction
           "$PHP_BIN" artisan storage:link --force
           "$PHP_BIN" artisan optimize
 
-          # The deploy account may be root while PHP-FPM runs as the CloudPanel
-          # site user. Give that user ownership of Laravel's writable paths.
           SITE_USER="$(basename "$(dirname "$(dirname "$APP_DIR")")")"
-          if [ "$(id -u)" -eq 0 ] && id "$SITE_USER" >/dev/null 2>&1; then
+          if [ "$CURRENT_UID" -eq 0 ] && id "$SITE_USER" >/dev/null 2>&1; then
             chown -R "$SITE_USER:$SITE_USER" storage bootstrap/cache
           fi
           chmod 775 \
@@ -292,12 +284,11 @@ jobs:
             bootstrap/cache
 
           test -f public/build/manifest.json
-          test -f public/uploads/hero-lanyard-slider-01.webp
-          test -f storage/app/public/uploads/blog-import/hook-jempol-lanyard-featured.webp
+          test -f public/images/logo.webp
 
           "$PHP_BIN" artisan up
           MAINTENANCE_ACTIVE=0
-          echo "Deploy Pusat Tali Lanyard selesai: $(date --iso-8601=seconds)"
+          echo "Deploy Lanyard Bekasi selesai: $(date --iso-8601=seconds)"
           REMOTE_SCRIPT
 
       - name: Verify production

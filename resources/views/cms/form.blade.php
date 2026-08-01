@@ -819,7 +819,7 @@
 
               <div class="seo-preview">
                 <div class="seo-preview__title" data-seo-preview-title>Meta title preview</div>
-                <div class="seo-preview__url">https://pusattalilanyard.com/<span data-seo-preview-slug>slug</span></div>
+                <div class="seo-preview__url">https://lanyardbekasi.com/<span data-seo-preview-slug>slug</span></div>
                 <p class="mt-2 text-sm text-muted-foreground" data-seo-preview-description>Meta description preview.</p>
               </div>
 
@@ -892,7 +892,7 @@
         <div class="card__body grid gap-4">
           <div>
             <label class="form-label" for="editorLinkUrl">URL</label>
-            <input id="editorLinkUrl" class="input" type="url" placeholder="https://pusattalilanyard.com/produk" data-link-url />
+            <input id="editorLinkUrl" class="input" type="url" placeholder="https://lanyardbekasi.com/produk" data-link-url />
           </div>
           <div class="link-option-grid">
             <label class="flex items-center gap-2">
@@ -1709,7 +1709,7 @@
         var featuredOk = firstImageInput ? !!firstImageInput.value : true;
         var html = quillInstance ? quillInstance.root.innerHTML : '';
         var hasContentImage = /<img\s/i.test(html);
-        var hasInternalLink = /href=["']\/|href=["']https?:\/\/(www\.)?pusattalilanyard\.com/i.test(html);
+        var hasInternalLink = /href=["']\/|href=["']https?:\/\/(www\.)?lanyardbekasi\.com/i.test(html);
 
         var rules = [
           ['Judul tersedia', !!(titleInput && titleInput.value.trim())],

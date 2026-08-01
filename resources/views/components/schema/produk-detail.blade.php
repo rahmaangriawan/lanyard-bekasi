@@ -4,15 +4,26 @@
   $siteUrl = rtrim($siteUrlRaw, '/');
   // Force prod domain if localhost / 127 / local
   if (preg_match('/^(https?:\/\/)?(localhost|127\.0\.0\.1)/i', $siteUrl) || str_contains($siteUrl, '.local') || str_contains($siteUrl, ':800')) {
-    $siteUrl = rtrim(config('app.prod_url', 'https://pusattalilanyard.com'), '/');
+    $siteUrl = rtrim(config('app.prod_url', 'https://lanyardbekasi.com'), '/');
     if (empty($siteUrl) || $siteUrl === $siteUrlRaw) {
-      $siteUrl = 'https://pusattalilanyard.com';
+      $siteUrl = 'https://lanyardbekasi.com';
     }
   }
 
   $prodUrl = $siteUrl . '/produk/' . ($product->slug ?? '');
-  $prodName = $product->name ?? 'Produk Lanyard';
-  $prodDesc = strip_tags($product->shortDescription ?? $product->description ?? 'Lanyard custom premium Indonesia.');
+  $normalizeProductCopy = static function ($value): string {
+    $plain = html_entity_decode(strip_tags((string) $value), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+    $plain = str_replace(
+      ['IndoLanyard', 'Pusat Tali Lanyard', 'PusatTaliLanyard', '—', '–'],
+      ['Lanyard Bekasi', 'Lanyard Bekasi', 'Lanyard Bekasi', '-', '-'],
+      $plain
+    );
+
+    return trim((string) preg_replace('/\s+/u', ' ', $plain));
+  };
+
+  $prodName = $normalizeProductCopy($product->name ?? 'Produk Lanyard');
+  $prodDesc = $normalizeProductCopy($product->shortDescription ?? $product->description ?? 'Lanyard custom dari Lanyard Bekasi.');
   
   $featImg = '';
   if (!empty($product->featuredImage)) {
@@ -26,7 +37,7 @@
       $featImg = preg_replace('/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?/', $siteUrl, $featImgRaw);
     }
   } else {
-    $featImg = $siteUrl . '/uploads/pusat-tali-lanyard-logo.webp';
+    $featImg = $siteUrl . '/uploads/aset-produk.webp';
   }
 
   $productSchema = [
@@ -36,6 +47,10 @@
     'description' => $prodDesc,
     'image' => [$featImg],
     'url' => $prodUrl,
+    'brand' => [
+      '@type' => 'Brand',
+      'name' => 'Lanyard Bekasi',
+    ],
   ];
 
   if (!empty($product->sku)) {
@@ -54,10 +69,9 @@
         'url' => $prodUrl,
         'priceCurrency' => 'IDR',
         'price' => $priceStr,
-        'availability' => 'https://schema.org/InStock',
         'seller' => [
           '@type' => 'Organization',
-          'name' => 'Pusat Tali Lanyard'
+          'name' => 'Lanyard Bekasi'
         ]
       ];
     }

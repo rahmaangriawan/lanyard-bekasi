@@ -1,12 +1,24 @@
 {
-    "name": "Pusat Tali Lanyard",
-    "short_name": "Pusat Lanyard",
-    "description": "Cetak lanyard custom premium",
+    "name": "Lanyard Bekasi",
+    "short_name": "Lanyard Bekasi",
+    "description": "Cetak lanyard custom premium di Bekasi",
     "start_url": "/",
+    "scope": "/",
     "display": "standalone",
     "background_color": "#0f172a",
     "theme_color": "#3b82f6",
     "icons": [
-        { "src": "/uploads/pusat-tali-lanyard-favicon.webp", "sizes": "any", "type": "image/webp", "purpose": "any" }
+        {
+            "src": "/favicon-192x192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "/favicon-512x512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any maskable"
+        }
     ]
 }

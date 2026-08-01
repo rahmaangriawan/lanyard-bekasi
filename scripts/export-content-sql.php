@@ -14,7 +14,7 @@ $app->make(Kernel::class)->bootstrap();
 $tables = ['category', 'post', 'page', 'media', 'setting', 'product', 'portfolio', 'citypage'];
 $pdo = DB::connection()->getPdo();
 $statements = [
-    '-- Public CMS content generated from the local Pusat Tali Lanyard database.',
+    '-- Public CMS content generated from the local Lanyard Bekasi database.',
     'SET NAMES utf8mb4;',
     'SET FOREIGN_KEY_CHECKS = 0;',
     '-- The bundled blog is a complete snapshot, not an additive seed.',
@@ -74,7 +74,7 @@ $content = rtrim((string) file_get_contents($path));
 file_put_contents(
     $fullPath,
     $schema.PHP_EOL.PHP_EOL
-    .'-- Public content snapshot; credentials and environment-specific users are excluded.'.PHP_EOL
+    .'-- Public Lanyard Bekasi content snapshot; credentials and environment-specific users are excluded.'.PHP_EOL
     .$content.PHP_EOL,
 );
 

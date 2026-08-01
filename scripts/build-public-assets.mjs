@@ -11,20 +11,10 @@ const bundles = {
     'public/css/header.css',
     'public/css/footer.css',
     'public/css/floating-whatsapp.css',
-    'public/css/home-cta.css',
     'public/css/button-motion.css',
   ],
   'public/build/public/home.min.css': [
-    'public/css/hero.css',
-    'public/css/home-pricing.css',
     'public/css/homepage.css',
-    'public/css/home-about.css',
-    'public/css/home-benefits.css',
-    'public/css/home-gallery.css',
-    'public/css/home-testimonials.css',
-    'public/css/home-faq.css',
-    'public/css/home-products.css',
-    'public/css/home-locations.css',
   ],
   'public/build/public/site.min.js': [
     'public/js/public-site.js',
@@ -33,7 +23,6 @@ const bundles = {
     'public/vendor/scroll/scroll-reveal.js',
   ],
   'public/build/public/home.min.js': [
-    'public/js/home-gallery.js',
     'public/js/home-testimonials.js',
   ],
 };

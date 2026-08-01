@@ -8,13 +8,13 @@ use Illuminate\Database\Eloquent\Model;
 class Setting extends Model
 {
     private const ASSET_FALLBACKS = [
-        'site_logo' => '/uploads/pusat-tali-lanyard-logo.webp',
-        'logo_url' => '/uploads/pusat-tali-lanyard-logo.webp',
-        'site_logo_header' => '/uploads/pusat-tali-lanyard-logo.webp',
-        'site_logo_mobile' => '/uploads/pusat-tali-lanyard-logo.webp',
-        'site_favicon' => '/uploads/pusat-tali-lanyard-favicon.webp',
-        'favicon_url' => '/uploads/pusat-tali-lanyard-favicon.webp',
-        'og_image' => '/uploads/pusat-tali-lanyard-logo.webp',
+        'site_logo' => '/uploads/lanyard-bekasi-logo.webp',
+        'logo_url' => '/uploads/lanyard-bekasi-logo.webp',
+        'site_logo_header' => '/uploads/lanyard-bekasi-logo.webp',
+        'site_logo_mobile' => '/uploads/lanyard-bekasi-logo.webp',
+        'site_favicon' => '/uploads/lanyard-bekasi-favicon.webp',
+        'favicon_url' => '/uploads/lanyard-bekasi-favicon.webp',
+        'og_image' => '/uploads/lanyard-bekasi-logo.webp',
     ];
 
     public const CREATED_AT = 'createdAt';

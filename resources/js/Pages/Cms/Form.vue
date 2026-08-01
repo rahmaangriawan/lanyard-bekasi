@@ -156,7 +156,7 @@ const setFile = (field: Field, event: Event) => {
                     <p class="text-xs font-extrabold uppercase tracking-normal text-primary">Publish</p>
                     <h2 class="mt-2 text-xl font-extrabold text-foreground">Simpan Perubahan</h2>
                     <p class="mt-2 text-sm leading-6 text-muted-foreground">
-                        Data akan langsung tersimpan ke database existing `pusattalilanyard`.
+                        Data akan langsung tersimpan ke database proyek yang sedang digunakan.
                     </p>
                     <button class="meridian-btn-primary mt-5 w-full" type="submit" :disabled="form.processing" :class="{ 'opacity-60': form.processing }">
                         <Save :size="18" />

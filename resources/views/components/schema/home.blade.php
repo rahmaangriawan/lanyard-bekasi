@@ -2,24 +2,24 @@
   $siteUrlRaw = config('app.url');
   if (empty($siteUrlRaw)) { $siteUrlRaw = url('/'); }
   $siteUrl = rtrim($siteUrlRaw, '/');
-  $logoUrl = $siteUrl . '/uploads/pusat-tali-lanyard-logo.webp';
-  $logoHeaderUrl = $siteUrl . '/uploads/pusat-tali-lanyard-logo.webp';
+  $logoUrl = $siteUrl . '/uploads/lanyard-bekasi-logo.webp';
+  $logoHeaderUrl = $siteUrl . '/uploads/lanyard-bekasi-logo.webp';
 
   $orgSchema = [
     '@context' => 'https://schema.org',
     '@type' => 'Organization',
     '@id' => $siteUrl . '/#organization',
-    'name' => 'Pusat Tali Lanyard',
+    'name' => 'Lanyard Bekasi',
     'url' => $siteUrl . '/',
     'logo' => [
       '@type' => 'ImageObject',
       'url' => $logoUrl,
-      'width' => 512,
-      'height' => 512,
+      'width' => 500,
+      'height' => 122,
     ],
     'image' => $logoUrl,
     'telephone' => '+6282210200700',
-    'email' => 'hello@pusattalilanyard.id',
+    'email' => 'info@lanyardbekasi.com',
     'description' => 'Cetak lanyard custom premium di Indonesia dengan pilihan bahan berkualitas, desain profesional, dan layanan pemesanan mudah. Bebas ongkir Indonesia Raya.',
     'sameAs' => [
       'https://wa.me/6282210200700',
@@ -36,7 +36,7 @@
     '@context' => 'https://schema.org',
     '@type' => 'LocalBusiness',
     '@id' => $siteUrl . '/#localbusiness',
-    'name' => 'Pusat Tali Lanyard',
+    'name' => 'Lanyard Bekasi',
     'url' => $siteUrl . '/',
     'logo' => $logoUrl,
     'image' => $logoHeaderUrl,
@@ -71,7 +71,7 @@
     '@type' => 'WebSite',
     '@id' => $siteUrl . '/#website',
     'url' => $siteUrl . '/',
-    'name' => 'Pusat Tali Lanyard',
+    'name' => 'Lanyard Bekasi',
     'publisher' => ['@id' => $siteUrl . '/#organization'],
     'inLanguage' => 'id-ID',
     'potentialAction' => [

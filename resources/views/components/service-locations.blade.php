@@ -12,7 +12,7 @@
     <div class="home-locations__map">
       <iframe
         src="https://www.google.com/maps?q=Indonesia&amp;z=4&amp;output=embed"
-        title="Peta jangkauan pengiriman Pusat Tali Lanyard di Indonesia"
+        title="Peta jangkauan pengiriman Lanyard Bekasi di Indonesia"
         loading="lazy"
         allowfullscreen=""
         referrerpolicy="strict-origin-when-cross-origin"

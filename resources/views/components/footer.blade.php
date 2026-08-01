@@ -1,90 +1,65 @@
-@php
-  $footerQuotationUrl = 'https://wa.me/6282210200700?text=Halo%20Pusat%20Tali%20Lanyard%2C%20saya%20mau%20minta%20quotation%20lanyard%20custom.';
-@endphp
-
 <footer class="site-footer" id="site-footer" aria-labelledby="site-footer-title">
-  <h2 class="sr-only" id="site-footer-title">Informasi Pusat Tali Lanyard</h2>
+  <h2 class="sr-only" id="site-footer-title">Informasi Lanyard Bekasi</h2>
 
   <div class="site-footer__container">
-    <div class="site-footer__top">
-      <div class="site-footer__identity">
-        <a class="site-footer__logo" href="{{ route('home') }}" aria-label="Pusat Tali Lanyard, kembali ke beranda">
+    <div class="site-footer__grid">
+      <div class="site-footer__brand">
+        <a class="site-footer__logo" href="{{ route('home') }}" aria-label="Lanyard Bekasi, kembali ke beranda">
           <img
-            src="/uploads/pusat-tali-lanyard-logo.webp"
-            alt="Pusat Tali Lanyard"
+            src="/uploads/lanyard-bekasi-logo.webp"
+            alt="Lanyard Bekasi"
             width="154"
-            height="57"
+            height="38"
             loading="lazy"
             decoding="async"
           />
         </a>
-
-        <address class="site-footer__contact">
-          <p>Jl. Manding Imogiri, Ponggok I, Trimulyo, Kec. Jetis, Kabupaten Bantul, Daerah Istimewa Yogyakarta 55781</p>
-          <a href="mailto:hello@pusattalilanyard.com">hello<wbr>@pusattalilanyard.com</a>
-          <a href="tel:+6282210200700">+62 822-1020-0700</a>
-        </address>
+        <p>Vendor lanyard custom untuk kebutuhan kantor, event, sekolah, dan komunitas dengan proses yang jelas.</p>
       </div>
 
       <nav class="site-footer__nav" aria-label="Navigasi footer">
         <div class="site-footer__nav-group">
-          <h3>Menu</h3>
+          <h3>Quick Links</h3>
           <ul>
-            <li><a href="{{ route('home') }}">Beranda</a></li>
+            <li><a href="{{ route('services') }}">Layanan</a></li>
             <li><a href="{{ route('products.index') }}">Produk</a></li>
-            <li><a href="{{ route('area') }}">Area Layanan</a></li>
+            <li><a href="{{ route('shipping') }}">Pengiriman</a></li>
+            <li><a href="{{ route('warranty') }}">Garansi</a></li>
+            <li><a href="{{ route('faq') }}">FAQ</a></li>
             <li><a href="{{ route('ordering') }}">Cara Pemesanan</a></li>
           </ul>
         </div>
 
         <div class="site-footer__nav-group">
-          <h3>Layanan</h3>
+          <h3>Legal</h3>
           <ul>
-            <li><a href="{{ route('pricing') }}">Daftar Harga</a></li>
-            <li><a href="{{ route('promo') }}">Promo</a></li>
-            <li><a href="{{ route('shipping') }}">Pengiriman</a></li>
-            <li><a href="{{ route('blog.index') }}">Blog</a></li>
-          </ul>
-        </div>
-
-        <div class="site-footer__nav-group">
-          <h3>Bantuan</h3>
-          <ul>
-            <li><a href="{{ $footerQuotationUrl }}" target="_blank" rel="noopener noreferrer">Hubungi Kami</a></li>
-            <li><a href="{{ route('home') }}#faq">FAQ</a></li>
             <li><a href="{{ route('privacy') }}">Kebijakan Privasi</a></li>
             <li><a href="{{ route('terms') }}">Syarat &amp; Ketentuan</a></li>
           </ul>
         </div>
-      </nav>
-    </div>
 
-    <div class="site-footer__cta-row">
-      <span class="site-footer__rule" aria-hidden="true"></span>
-      <a
-        class="site-footer__cta"
-        href="{{ $footerQuotationUrl }}"
-        target="_blank"
-        rel="noopener noreferrer"
-        data-button-motion
-      >
-        <span data-button-label>Minta Quotation</span>
-        <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>
-      </a>
+        <div class="site-footer__contact-wrap">
+          <h3>Kontak Kami</h3>
+          <address class="site-footer__contact">
+            <a href="tel:+6282210200700">
+              <span class="material-symbols-outlined" aria-hidden="true">call</span>
+              <span>+62 822-1020-0700</span>
+            </a>
+            <a href="mailto:info@lanyardbekasi.com">
+              <span class="material-symbols-outlined" aria-hidden="true">mail</span>
+              <span>info<wbr>@lanyardbekasi.com</span>
+            </a>
+            <p>
+              <span class="material-symbols-outlined" aria-hidden="true">location_on</span>
+              <span>Bekasi, Indonesia</span>
+            </p>
+          </address>
+        </div>
+      </nav>
     </div>
 
     <div class="site-footer__bottom">
-      <div class="site-footer__summary">
-        <p>Cetak lanyard custom untuk kantor, event, sekolah, dan komunitas dengan proses cepat serta hasil profesional.</p>
-        <small>&copy; {{ date('Y') }} Pusat Tali Lanyard</small>
-      </div>
-
-      <nav class="site-footer__legal" aria-label="Informasi legal">
-        <a href="{{ route('terms') }}">Syarat &amp; Ketentuan</a>
-        <a href="{{ route('privacy') }}">Kebijakan Privasi</a>
-      </nav>
+      <small>&copy; {{ date('Y') }} Lanyard Bekasi. Seluruh hak dilindungi.</small>
     </div>
   </div>
-
-  <div class="site-footer__wordmark" aria-hidden="true">PUSAT TALI LANYARD</div>
 </footer>

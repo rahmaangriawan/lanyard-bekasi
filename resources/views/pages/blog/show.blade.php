@@ -4,12 +4,12 @@
   use App\Support\AssetUrl;
   use App\Support\AuthorProfile;
   use App\Support\AutoLinkSeo;
-  use App\Support\HtmlSanitizer;
+  use App\Support\BlogContent;
   use App\Support\ResponsiveImage;
   use Illuminate\Support\Str;
 
   $imageUrl = fn ($source) => AssetUrl::relative($source);
-  $cleanContent = AssetUrl::html(HtmlSanitizer::clean($post->content ?? ''));
+  $cleanContent = BlogContent::render($post->content ?? '');
   $cleanContent = preg_replace('/<div[^>]*>\s*<p[^>]*>\s*Bagikan artikel\s*<\/p>[\s\S]*?<button[^>]*>[\s\S]*?<\/button>\s*<\/div>\s*<\/div>/i', '', $cleanContent);
   $processedContent = AutoLinkSeo::apply($cleanContent);
   $plainContent = trim(preg_replace('/\s+/u', ' ', strip_tags($cleanContent)));
@@ -40,7 +40,7 @@
       return '<h'.$level.' id="'.e($slug).'"'.$attributes.'>'.$match[3].'</h'.$level.'>';
     }, $processedContent);
 
-    $tocHtml = '<details class="article-toc" open>';
+    $tocHtml = '<details class="article-toc">';
     $tocHtml .= '<summary><span>Daftar isi</span><span class="material-symbols-outlined" aria-hidden="true">expand_more</span></summary>';
     $tocHtml .= '<nav aria-label="Daftar isi artikel"><ol>';
     foreach ($toc as $item) {
@@ -55,15 +55,17 @@
   $rawTags = (string) ($post->tags ?? '');
   $parsedTags = collect(explode(',', $rawTags))->map(fn ($tag) => trim($tag))->filter()->unique();
 
-  $authorName = $post->author?->name ?: 'Tim Pusat Tali Lanyard';
+  $authorName = $post->author?->name ?: 'Tim Lanyard Bekasi';
   $authorAvatar = $imageUrl($post->author?->avatar);
   $authorBio = $post->author ? $post->author->bio : AuthorProfile::DEFAULT_BIO;
   $authorSlug = $post->author?->slug ?: Str::slug($authorName);
   $blogShowCssPath = public_path('css/blog-show.css');
   $blogShowCssVersion = file_exists($blogShowCssPath) ? filemtime($blogShowCssPath) : 1;
+  $blogArchiveCssPath = public_path('css/blog-archive.css');
+  $blogArchiveCssVersion = file_exists($blogArchiveCssPath) ? filemtime($blogArchiveCssPath) : 1;
 @endphp
 
-@section('title', $post->metaTitle ?: $post->title . ' | Pusat Tali Lanyard')
+@section('title', $post->metaTitle ?: $post->title . ' | Lanyard Bekasi')
 @section('meta_description', $post->metaDescription)
 @section('seo_type', 'article')
 @section('seo_canonical', route('blog.show', ['slug' => $post->slug]))
@@ -73,6 +75,7 @@
 
 @push('head')
   <link rel="stylesheet" href="/css/blog-show.css?v={{ $blogShowCssVersion }}">
+  <link rel="stylesheet" href="/css/blog-archive.css?v={{ $blogArchiveCssVersion }}">
 @endpush
 @push('schema')
   @include('components.schema.blog-post')
@@ -97,9 +100,9 @@
         <h1>{{ $post->title }}</h1>
         <div class="article-meta">
           <span>{{ $authorName }}</span>
-          <span aria-hidden="true">•</span>
+          <span aria-hidden="true">|</span>
           <time datetime="{{ \Carbon\Carbon::parse($post->createdAt)->toDateString() }}">{{ \Carbon\Carbon::parse($post->createdAt)->translatedFormat('j F Y') }}</time>
-          <span aria-hidden="true">•</span>
+          <span aria-hidden="true">|</span>
           <span>{{ $readingTime }} menit baca</span>
         </div>
       </div>
@@ -128,6 +131,19 @@
         @endif
 
         @include('components.article-share', ['class' => 'article-share--sidebar'])
+
+        @if($relatedPosts->isNotEmpty())
+          <section class="article-related-sidebar" aria-labelledby="article-related-sidebar-title">
+            <div class="article-related-sidebar__heading">
+              <h2 id="article-related-sidebar-title">Artikel terkait</h2>
+            </div>
+            <div class="article-related-sidebar__list">
+              @foreach($relatedPosts as $related)
+                <x-blog.archive-card :post="$related" variant="sidebar" />
+              @endforeach
+            </div>
+          </section>
+        @endif
       </div>
     </aside>
 
@@ -223,7 +239,7 @@
   </div>
 
   @if($relatedPosts->isNotEmpty())
-    <section class="related-articles" aria-labelledby="related-title">
+    <section class="related-articles related-articles--bottom" aria-labelledby="related-title">
       <div class="article-wide-container">
         <div class="article-section-heading">
           <p>Baca Berikutnya</p>
@@ -231,24 +247,7 @@
         </div>
         <div class="related-grid">
           @foreach($relatedPosts as $related)
-            @php
-              $relatedImage = $imageUrl($related->featuredImage);
-              $relatedSrcset = ResponsiveImage::srcset($relatedImage);
-            @endphp
-            <article class="related-card">
-              <a class="related-card__media" href="/blog/{{ $related->slug }}" aria-label="Baca {{ $related->title }}">
-                @if($relatedImage)
-                  <img src="{{ $relatedImage }}" @if($relatedSrcset) srcset="{{ $relatedSrcset }}" sizes="(min-width: 1024px) 400px, (min-width: 700px) 50vw, 100vw" @endif alt="{{ $related->title }}" width="640" height="400" loading="lazy" decoding="async">
-                @else
-                  <span class="material-symbols-outlined" aria-hidden="true">article</span>
-                @endif
-              </a>
-              <div>
-                <p>{{ $related->category->name ?? 'Artikel' }}</p>
-                <h3><a href="/blog/{{ $related->slug }}">{{ $related->title }}</a></h3>
-                <time datetime="{{ \Carbon\Carbon::parse($related->createdAt)->toDateString() }}">{{ \Carbon\Carbon::parse($related->createdAt)->translatedFormat('j M Y') }}</time>
-              </div>
-            </article>
+            <x-blog.archive-card :post="$related" variant="compact" />
           @endforeach
         </div>
       </div>

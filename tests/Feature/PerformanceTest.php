@@ -83,12 +83,67 @@ class PerformanceTest extends TestCase
         libxml_use_internal_errors($previous);
         $xpath = new DOMXPath($document);
 
-        $this->assertSame(1, $xpath->query('//*[@class="home-testimonials__stars" and @role="img" and @aria-label="Rating 5 dari 5"]')->length);
-        $this->assertSame(1, $xpath->query('//*[@class="home-testimonials__dots" and @role="group" and @aria-label="Pilih testimoni"]')->length);
-        $this->assertSame(3, $xpath->query('//button[contains(concat(" ", normalize-space(@class), " "), " home-testimonials__dot ")]')->length);
+        $this->assertSame(3, $xpath->query('//*[@class="home-testimonials__stars" and @role="img" and @aria-label="Rating 5 dari 5"]')->length);
+        $this->assertSame(0, $xpath->query('//*[contains(concat(" ", normalize-space(@class), " "), " home-testimonials__dots ")]')->length);
+        $this->assertSame(3, $xpath->query('//*[@data-testimonial-item]')->length);
+        $this->assertSame(3, $xpath->query('//img[contains(concat(" ", normalize-space(@class), " "), " home-testimonials__media-image ") and @width="1200" and @height="801"]')->length);
+        $this->assertSame(1, $xpath->query('//img[@src="/uploads/testimonial-lanyard-anggi.webp"]')->length);
+        $this->assertSame(1, $xpath->query('//img[@src="/uploads/testimonial-lanyard-andi.webp"]')->length);
+        $this->assertSame(1, $xpath->query('//img[@src="/uploads/testimonial-lanyard-dimas.webp"]')->length);
+        $this->assertSame(0, $xpath->query('//button[@data-testimonials-prev or @data-testimonials-next]')->length);
+        $this->assertSame(1, $xpath->query('//*[@data-testimonials-status and @aria-live="polite" and @aria-atomic="true"]')->length);
+        $this->assertSame(1, $xpath->query('//section[@id="cta-section"]//img[@src="/uploads/lanyard-bekasi-cta.webp" and @width="941" and @height="1672"]')->length);
         $this->assertSame(1, $xpath->query('//ul[contains(concat(" ", normalize-space(@class), " "), " home-products__grid ")]')->length);
-        $this->assertGreaterThan(0, $xpath->query('//ul[contains(concat(" ", normalize-space(@class), " "), " home-products__grid ")]/li[contains(concat(" ", normalize-space(@class), " "), " home-products__card ")]')->length);
+        $this->assertSame(4, $xpath->query('//ul[contains(concat(" ", normalize-space(@class), " "), " home-products__grid ")]/li[contains(concat(" ", normalize-space(@class), " "), " home-products__card ")]')->length);
+        $this->assertSame(4, $xpath->query('//ol[contains(concat(" ", normalize-space(@class), " "), " home-order__list ")]/li')->length);
+        $this->assertSame(3, $xpath->query('//article[contains(concat(" ", normalize-space(@class), " "), " home-blog__card ")]')->length);
+        $this->assertSame(1, $xpath->query('//main//h1')->length);
+        $this->assertSame(1, $xpath->query('//*[@id="layanan"]')->length);
+        $this->assertSame(1, $xpath->query('//*[@id="garansi"]')->length);
+        $this->assertSame(1, $xpath->query('//*[@id="faq"]')->length);
+        $this->assertSame(4, $xpath->query('//*[@id="faq"]//details')->length);
+        $this->assertSame(0, $xpath->query('//*[@id="faq"]//details[@open]')->length);
+        $this->assertSame(0, $xpath->query('//*[@id="faq"]//a[@href="'.route('faq').'"]')->length);
         $this->assertSame(0, $xpath->query('//article[@role="listitem"]')->length);
+    }
+
+    public function test_homepage_text_scale_increases_copy_without_resizing_headings_or_glyphs(): void
+    {
+        $css = file_get_contents(public_path('css/homepage.css'));
+
+        $this->assertIsString($css);
+        $this->assertMatchesRegularExpression('/\.home-section-heading\s*>\s*p\s*\{[^}]*font-size:\s*12px;/s', $css);
+        $this->assertMatchesRegularExpression('/\.ptl-hero__description\s*\{[^}]*font-size:\s*16px;/s', $css);
+        $this->assertMatchesRegularExpression('/\.benefit-item\s+h3\s*\{[^}]*font-size:\s*15px;/s', $css);
+        $this->assertMatchesRegularExpression('/\.benefit-item\s+p\s*\{[^}]*font-size:\s*14px;/s', $css);
+        $this->assertMatchesRegularExpression('/\.home-products__body\s*>\s*p\s*\{[^}]*font-size:\s*14px;/s', $css);
+        $this->assertMatchesRegularExpression('/\.home-order__list\s+h3\s*\{[^}]*font-size:\s*16px;/s', $css);
+        $this->assertMatchesRegularExpression('/\.home-order__list\s+p\s*\{[^}]*font-size:\s*14px;/s', $css);
+        $this->assertMatchesRegularExpression('/\.home-cta__copy\s+p\s*\{[^}]*font-size:\s*15px;/s', $css);
+        $this->assertMatchesRegularExpression('/\.home-cta__action\s+ul\s*\{[^}]*font-size:\s*12px;/s', $css);
+        $this->assertMatchesRegularExpression('/\.home-blog__body\s+p\s*\{[^}]*font-size:\s*13px;/s', $css);
+        $this->assertMatchesRegularExpression('/\.home-testimonials__card\s+blockquote\s+p\s*\{[^}]*font-size:\s*16px;/s', $css);
+        $this->assertMatchesRegularExpression('/\.home-faq__answer\s+p\s*\{[^}]*font-size:\s*13px;/s', $css);
+        $this->assertStringContainsString('font-size: calc(clamp(1rem, 1.4vw, 1.18rem) + 1px);', $css);
+        $this->assertStringContainsString('font-size: calc(1rem + 1px);', $css);
+
+        $this->assertMatchesRegularExpression('/\.ptl-hero__title\s*\{[^}]*font-size:\s*clamp\(3rem,\s*4\.6vw,\s*4\.2rem\);/s', $css);
+        $this->assertMatchesRegularExpression('/\.home-section-heading\s+h2\s*\{[^}]*font-size:\s*clamp\(1\.75rem,\s*2\.6vw,\s*2\.25rem\);/s', $css);
+        $this->assertMatchesRegularExpression('/\.benefit-item__icon\s+\.material-symbols-outlined\s*\{[^}]*font-size:\s*28px\s*!important;/s', $css);
+        $this->assertMatchesRegularExpression('/\.home-testimonials__quote-mark\s*\{[^}]*font-size:\s*48px;/s', $css);
+        $this->assertMatchesRegularExpression('/\.home-testimonials__stars\s*\{[^}]*font-size:\s*18px;/s', $css);
+    }
+
+    public function test_mobile_header_content_stretches_to_the_available_width(): void
+    {
+        $headerCss = file_get_contents(public_path('css/header.css'));
+
+        $this->assertIsString($headerCss);
+        $this->assertStringContainsString('grid-template-columns: minmax(0, 1fr);', $headerCss);
+        $this->assertStringContainsString('justify-content: stretch;', $headerCss);
+        $this->assertStringContainsString('.site-header__mobile-links', $headerCss);
+        $this->assertStringContainsString('.site-header__mobile-contact', $headerCss);
+        $this->assertGreaterThanOrEqual(3, substr_count($headerCss, 'width: 100%;'));
     }
 
     public function test_login_and_comments_keep_session_and_csrf_protection(): void

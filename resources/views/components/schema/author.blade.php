@@ -4,14 +4,14 @@
   $siteUrl = rtrim($siteUrlRaw, '/');
   // Force prod domain if localhost / 127 / local
   if (preg_match('/^(https?:\/\/)?(localhost|127\.0\.0\.1)/i', $siteUrl) || str_contains($siteUrl, '.local') || str_contains($siteUrl, ':800')) {
-    $siteUrl = rtrim(config('app.prod_url', 'https://pusattalilanyard.com'), '/');
+    $siteUrl = rtrim(config('app.prod_url', 'https://lanyardbekasi.com'), '/');
     if (empty($siteUrl) || $siteUrl === $siteUrlRaw) {
-      $siteUrl = 'https://pusattalilanyard.com';
+      $siteUrl = 'https://lanyardbekasi.com';
     }
   }
 
   // Author details derived from $author or fallback
-  $authorName = isset($displayName) ? $displayName : ($author->name ?? 'Tim Pusat Tali Lanyard');
+  $authorName = isset($displayName) ? $displayName : ($author->name ?? 'Tim Lanyard Bekasi');
   $authorSlugName = isset($authorSlug) ? $authorSlug : ($author->slug ?? \Illuminate\Support\Str::slug($authorName));
   $canonicalUrl = $siteUrl . '/blog/penulis/' . $authorSlugName;
   $bioDesc = isset($bioText) ? $bioText : ($author->bio ?? null);

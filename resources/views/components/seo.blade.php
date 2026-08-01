@@ -20,14 +20,14 @@
   }
   // Force production domain if config is localhost / 127 / empty to avoid indexing dev
   if (strpos($siteUrl, 'localhost') !== false || strpos($siteUrl, '127.0.0.1') !== false) {
-    $siteUrl = 'https://pusattalilanyard.com';
+    $siteUrl = 'https://lanyardbekasi.com';
   }
   if (!preg_match('/^https?:\/\//', $siteUrl)) {
-    $siteUrl = 'https://pusattalilanyard.com';
+    $siteUrl = 'https://lanyardbekasi.com';
   }
   $siteUrl = rtrim($siteUrl, '/');
 
-  $defaultTitle = 'Pusat Tali Lanyard | Cetak Lanyard Custom Cepat & Berkualitas';
+  $defaultTitle = 'Lanyard Bekasi | Cetak Lanyard Custom Cepat & Berkualitas';
   $defaultDesc = 'Cetak lanyard custom premium di Indonesia dengan pilihan bahan berkualitas, desain profesional, dan layanan pemesanan mudah. Bebas ongkir Indonesia Raya.';
 
   $incomingTitle = isset($title) && $title !== '' ? $title : null;
@@ -64,7 +64,7 @@
 
   $ogImagePath = \App\Support\AssetUrl::relative(
     $incomingOgImage,
-    '/uploads/pusat-tali-lanyard-logo.webp'
+    '/uploads/lanyard-bekasi-logo.webp'
   );
   if (strpos($ogImagePath, 'http') === 0) {
     $finalImage = $ogImagePath;
@@ -113,11 +113,11 @@
 <link rel="canonical" href="{{ $finalCanonical }}">
 @endif
 <meta name="robots" content="{{ $robotsContent }}">
-<meta name="author" content="Pusat Tali Lanyard">
+<meta name="author" content="Lanyard Bekasi">
 <meta name="theme-color" content="#0f172a">
 
 {{-- Open Graph --}}
-<meta property="og:site_name" content="Pusat Tali Lanyard">
+<meta property="og:site_name" content="Lanyard Bekasi">
 <meta property="og:locale" content="id_ID">
 <meta property="og:title" content="{{ $finalTitleDisplay }}">
 <meta property="og:description" content="{{ $trimmedDesc }}">

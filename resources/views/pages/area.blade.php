@@ -1,8 +1,8 @@
 @extends('layouts.public')
 
 @section('title', 'Area Pengiriman Lanyard Custom ke Seluruh Indonesia')
-@section('meta_description', 'Pusat Tali Lanyard melayani pengiriman lanyard custom ke seluruh Indonesia dengan cakupan utama Jakarta, Bogor, Depok, Tangerang, dan Bekasi.')
-@section('seo_og_image', '/uploads/hero-katalog-pusat-tali-lanyard.webp')
+@section('meta_description', 'Lanyard Bekasi melayani pengiriman lanyard custom ke seluruh Indonesia dengan cakupan utama Jakarta, Bogor, Depok, Tangerang, dan Bekasi.')
+@section('seo_og_image', '/uploads/hero-katalog-lanyard-bekasi.webp')
 
 @push('head')
   <link rel="stylesheet" href="/css/area-index.css?v={{ file_exists(public_path('css/area-index.css')) ? filemtime(public_path('css/area-index.css')) : 1 }}">
@@ -16,7 +16,7 @@
     ['number' => '02', 'title' => 'Produksi dan pengecekan', 'description' => 'Pesanan diproduksi sesuai persetujuan lalu diperiksa sebelum dikemas.'],
     ['number' => '03', 'title' => 'Pengiriman ke lokasi', 'description' => 'Pesanan dikirim melalui ekspedisi menuju alamat yang telah dikonfirmasi.'],
   ];
-  $shippingWhatsapp = 'https://wa.me/6282210200700?text=Halo%20Pusat%20Tali%20Lanyard%2C%20saya%20mau%20konsultasi%20pengiriman%20lanyard%20custom.';
+  $shippingWhatsapp = 'https://wa.me/6282210200700?text='.rawurlencode('Halo Lanyard Bekasi, saya mau konsultasi pengiriman lanyard custom.');
 @endphp
 
 <div class="area-index">
@@ -31,7 +31,7 @@
       <div class="area-index__map">
         <iframe
           src="https://www.google.com/maps?q=Indonesia&amp;z=4&amp;output=embed"
-          title="Peta jangkauan pengiriman Pusat Tali Lanyard di Indonesia"
+          title="Peta jangkauan pengiriman Lanyard Bekasi di Indonesia"
           loading="lazy"
           allowfullscreen=""
           referrerpolicy="strict-origin-when-cross-origin"

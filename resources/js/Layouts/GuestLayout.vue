@@ -7,7 +7,7 @@
                     <div class="relative">
                         <div class="inline-flex items-center gap-3 rounded-full bg-white/10 px-4 py-2 text-sm font-extrabold">
                             <span class="meridian-brand-mark bg-white text-primary">LD</span>
-                            Pusat Tali Lanyard CMS
+                            Lanyard Bekasi CMS
                         </div>
                     </div>
                     <div class="relative max-w-md">
@@ -26,7 +26,7 @@
                         <div class="mb-8 lg:hidden">
                             <div class="inline-flex items-center gap-3 rounded-full border border-border bg-white px-4 py-2 text-sm font-extrabold">
                                 <span class="meridian-brand-mark">LD</span>
-                                Pusat Tali Lanyard CMS
+                                Lanyard Bekasi CMS
                             </div>
                         </div>
                         <slot />

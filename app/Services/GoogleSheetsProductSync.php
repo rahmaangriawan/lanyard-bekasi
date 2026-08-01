@@ -255,7 +255,7 @@ final class GoogleSheetsProductSync
 
         return collect($tokens)->contains(fn ($token) => $token !== '' && (
             $token === $host
-            || Str::contains($token, 'pusattalilanyard')
+            || Str::contains($token, 'lanyardbekasi')
             || $token === 'indonesia'
         ));
     }

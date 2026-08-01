@@ -1,5 +1,5 @@
 @php
-  $floatingWhatsappMessage = rawurlencode('Halo Pusat Tali Lanyard, saya mau konsultasi lanyard custom.');
+  $floatingWhatsappMessage = rawurlencode('Halo Lanyard Bekasi, saya mau konsultasi lanyard custom.');
   $floatingWhatsappUrl = "https://wa.me/6282210200700?text={$floatingWhatsappMessage}";
 @endphp
 
@@ -9,7 +9,7 @@
   href="{{ $floatingWhatsappUrl }}"
   target="_blank"
   rel="noopener noreferrer"
-  aria-label="Chat Pusat Tali Lanyard melalui WhatsApp"
+  aria-label="Chat Lanyard Bekasi melalui WhatsApp"
   title="Chat melalui WhatsApp"
 >
   <img

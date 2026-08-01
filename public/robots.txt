@@ -6,4 +6,4 @@ Disallow: /login/
 Disallow: /storage/
 Disallow: /*?q=
 
-Sitemap: https://pusattalilanyard.com/sitemap.xml
+Sitemap: https://lanyardbekasi.com/sitemap.xml

@@ -6,7 +6,7 @@
       <head>
         <meta charset="UTF-8"/>
         <meta name="viewport" content="width=device-width, initial-scale=1"/>
-        <title>Sitemap | Pusat Tali Lanyard</title>
+        <title>Sitemap | Lanyard Bekasi</title>
         <style>
           body { margin: 0; background: #f8fafc; color: #0f172a; font-family: Arial, sans-serif; }
           main { max-width: 960px; margin: 0 auto; padding: 48px 24px; }
@@ -26,7 +26,7 @@
             </tbody></table>
           </xsl:when>
           <xsl:otherwise>
-            <h1>Daftar URL Sitemap</h1><p>URL publik yang dapat diindeks untuk Pusat Tali Lanyard.</p>
+            <h1>Daftar URL Sitemap</h1><p>URL publik yang dapat diindeks untuk Lanyard Bekasi.</p>
             <table><thead><tr><th>URL</th><th>Terakhir diperbarui</th></tr></thead><tbody>
               <xsl:for-each select="sm:urlset/sm:url"><tr><td><a href="{sm:loc}"><xsl:value-of select="sm:loc"/></a></td><td><xsl:value-of select="sm:lastmod"/></td></tr></xsl:for-each>
             </tbody></table>

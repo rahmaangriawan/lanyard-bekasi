@@ -1,389 +1,330 @@
 @extends('layouts.public')
 
 @php
-  $title = isset($product->metaTitle) && $product->metaTitle ? $product->metaTitle : (($product->name ?? 'Lanyard Custom Printing Full Color') . ' - Pusat Tali Lanyard');
-  $desc = isset($product->metaDescription) && $product->metaDescription ? $product->metaDescription : (strip_tags($product->shortDescription ?? $product->description ?? 'Lanyard custom premium dengan bahan tissue, cetak full color, stopper hitam, dan kait besi.'));
-  $imgOg = $product->featuredImage ?? '/uploads/pusat-tali-lanyard-logo.webp';
-  $splideCssFile = public_path('vendor/splide/splide.min.css');
-  $splideCssV = file_exists($splideCssFile) ? filemtime($splideCssFile) : 1;
+  use App\Support\AssetUrl;
+  use App\Support\ResponsiveImage;
+  use Illuminate\Support\Str;
+
+  $normalizeCopy = static function ($value): string {
+      $plain = html_entity_decode(strip_tags((string) $value), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+      $plain = str_replace(
+          ['IndoLanyard', 'Pusat Tali Lanyard', 'PusatTaliLanyard', '—', '–'],
+          ['Lanyard Bekasi', 'Lanyard Bekasi', 'Lanyard Bekasi', '-', '-'],
+          $plain
+      );
+
+      return trim((string) preg_replace('/\s+/u', ' ', $plain));
+  };
+
+  $parseProductList = static function ($value) use ($normalizeCopy): array {
+      if (is_array($value)) {
+          $items = $value;
+      } else {
+          $raw = trim((string) $value);
+          $decoded = $raw !== '' ? json_decode($raw, true) : null;
+          $items = is_array($decoded) ? $decoded : preg_split('/(?:\r\n|\r|\n|;|\|)+/u', $raw, -1, PREG_SPLIT_NO_EMPTY);
+      }
+
+      $normalized = [];
+      foreach ((array) $items as $key => $item) {
+          if (is_array($item)) {
+              $item = implode(': ', array_filter(array_map($normalizeCopy, $item)));
+          } elseif (! is_int($key) && ! ctype_digit((string) $key)) {
+              $item = $normalizeCopy($key).': '.$normalizeCopy($item);
+          } else {
+              $item = $normalizeCopy($item);
+          }
+
+          if ($item !== '') {
+              $normalized[] = $item;
+          }
+      }
+
+      return array_values(array_unique($normalized));
+  };
+
+  $productName = $normalizeCopy($product->name ?: 'Lanyard Custom');
+  $categoryName = $normalizeCopy($product->category?->name ?: 'Lanyard Custom');
+  $sku = $normalizeCopy($product->sku);
+  $price = $normalizeCopy($product->basePrice) ?: 'Minta quotation';
+  $minimumOrder = $normalizeCopy($product->minOrder);
+  $description = $normalizeCopy($product->description ?: $product->shortDescription);
+  $description = $description ?: 'Informasi bahan, ukuran, aksesori, dan kebutuhan produksi dapat dikonsultasikan langsung dengan tim Lanyard Bekasi.';
+  $descriptionHtml = Str::markdown($description, [
+      'html_input' => 'strip',
+      'allow_unsafe_links' => false,
+  ]);
+  $shortDescription = $normalizeCopy($product->shortDescription) ?: Str::limit($description, 150, '');
+  $specifications = $parseProductList($product->specs);
+  $accessories = $parseProductList($product->accessories);
+
+  $hasFeaturedImage = filled($product->featuredImage);
+  $heroImage = AssetUrl::relative($product->featuredImage, '/uploads/aset-produk.webp');
+  $heroSrcset = ResponsiveImage::srcset($heroImage);
+  $heroAlt = $hasFeaturedImage ? 'Foto '.$productName : 'Contoh hasil lanyard custom Lanyard Bekasi';
+
+  $waNumber = \App\Models\Setting::query()->where('key', 'wa_number')->value('value') ?: '6282210200700';
+  $waMessage = rawurlencode('Halo Lanyard Bekasi, saya ingin konsultasi tentang produk '.$productName.'. Mohon bantuannya.');
+  $waLink = "https://wa.me/{$waNumber}?text={$waMessage}";
+
+  $title = filled($product->metaTitle) ? $normalizeCopy($product->metaTitle) : $productName.' | Lanyard Bekasi';
+  $metaDescription = filled($product->metaDescription)
+      ? $normalizeCopy($product->metaDescription)
+      : Str::limit($shortDescription, 155, '');
+
+  $trustItems = [
+      ['title' => 'Bantuan Desain', 'description' => 'Mockup sebelum produksi'],
+      ['title' => 'Spesifikasi Fleksibel', 'description' => 'Bahan dan aksesori custom'],
+      ['title' => 'Quality Control', 'description' => 'Produk diperiksa sebelum kirim'],
+      ['title' => 'Pengiriman Terpantau', 'description' => 'Nomor resi dibagikan'],
+  ];
+
+  $orderSteps = [
+      ['title' => 'Konsultasi', 'description' => 'Sampaikan jumlah dan kebutuhan Anda.'],
+      ['title' => 'Review desain', 'description' => 'Periksa mockup serta spesifikasi.'],
+      ['title' => 'Konfirmasi', 'description' => 'Setujui quotation sebelum produksi.'],
+      ['title' => 'Produksi & kirim', 'description' => 'Produk diperiksa lalu dikirim.'],
+  ];
 @endphp
 
 @section('title', $title)
-@section('meta_description', $desc)
-@section('seo_og_image', $imgOg)
+@section('meta_description', $metaDescription)
+@section('seo_og_image', $heroImage)
 @section('seo_type', 'product')
-@section('seo_canonical', config('app.url') . '/produk/' . ($product->slug ?? ''))
+@section('seo_canonical', config('app.url').'/produk/'.$product->slug)
 
 @push('head')
-<link rel="stylesheet" href="/vendor/splide/splide.min.css?v={{ $splideCssV }}" />
-<style>
-  .btn-whatsapp {
-    background-color: #25D366;
-    color: #ffffff;
-    transition: background-color 0.2s ease-out, transform 150ms ease-out;
-  }
-  .btn-whatsapp:hover {
-    background-color: #20ba5a;
-  }
-  .btn-whatsapp:active {
-    transform: scale(0.98);
-  }
-  .color-star {
-    color: #fbbf24;
-  }
-  /* Product Card - same as showcase */
-  .product-card{
-    display:flex; flex-direction:column;
-    height:100%;
-    border-radius:16px; background:#fff; border:1px solid #f1f5f9;
-    overflow:hidden;
-    transition: border-color 250ms ease-out, box-shadow 250ms ease-out, transform 250ms cubic-bezier(0.22,1,0.36,1);
-    will-change: transform, box-shadow, border-color;
-  }
-  .product-card:hover{
-    transform: translateY(-4px);
-    border-color:#e2e8f0;
-    box-shadow:0 16px 32px -16px rgba(15,23,42,0.16);
-  }
-  .product-card-imgwrap{
-    position:relative; aspect-ratio:4/5; background:#fcfcfd; overflow:hidden;
-    display:flex; align-items:center; justify-content:center; padding:22px;
-  }
-  .product-card-img{
-    width:100%; height:100%; object-fit:contain;
-    transition: transform 450ms cubic-bezier(0.22,1,0.36,1);
-    will-change: transform;
-    pointer-events:none;
-  }
-  .product-card:hover .product-card-img{ transform: scale(1.05); }
-  .product-card:hover .product-card-title {
-    color: var(--primary);
-  }
-  /* Related Products Splide - mobile slide, desktop grid 4 */
-  #related-products{ content-visibility: visible; }
-  #related-splide{
-    overflow:visible;
-  }
-  #related-splide .splide__track{
-    overflow:hidden;
-    padding-bottom:8px;
-  }
-  .related-slide{
-    width:260px;
-  }
-  @media(min-width:640px){
-    .related-slide{ width:280px; }
-  }
-  /* Desktop >=768px: destroy splide -> grid 4 */
-  @media(min-width:768px){
-    #related-splide .splide__track{
-      overflow:visible !important;
-    }
-    .related-list{
-      display:grid !important;
-      grid-template-columns:repeat(4, minmax(0,1fr)) !important;
-      gap:24px !important;
-      transform:none !important;
-      width:100% !important;
-    }
-    .related-slide{
-      width:auto !important;
-      margin-right:0 !important;
-    }
-  }
-  .toggle-desc-btn{
-    font-size:11px; font-weight:700; letter-spacing:0.04em; text-transform:uppercase;
-  }
-</style>
+  <link rel="preload" href="{{ $heroImage }}" as="image" fetchpriority="high">
+  <link rel="stylesheet" href="/css/product-detail.css?v={{ file_exists(public_path('css/product-detail.css')) ? filemtime(public_path('css/product-detail.css')) : 1 }}">
 @endpush
 
 @push('schema')
-  @include('components.schema.produk-detail')
+  @include('components.schema.produk-detail', ['product' => $product])
 @endpush
 
 @section('content')
-@php
-  $imgHelper = fn ($src) => \App\Support\AssetUrl::relative($src);
+<div class="product-detail">
+  <section class="product-detail__hero" aria-labelledby="product-detail-title">
+    <div class="product-detail__shell">
+      <nav class="product-detail__breadcrumb" aria-label="Breadcrumb">
+        <ol>
+          <li><a href="{{ route('home') }}">Beranda</a></li>
+          <li><a href="{{ route('products.index') }}">Produk</a></li>
+          <li aria-current="page">{{ $productName }}</li>
+        </ol>
+      </nav>
 
-  $featImg = $imgHelper($product->featuredImage);
+      <div class="product-detail__marketplace">
+        <div class="product-detail__gallery">
+          <figure class="product-detail__media">
+            <img
+              src="{{ $heroImage }}"
+              @if($heroSrcset) srcset="{{ $heroSrcset }}" sizes="(max-width: 767px) 100vw, 560px" @endif
+              alt="{{ $heroAlt }}"
+              width="1200"
+              height="900"
+              fetchpriority="high"
+              decoding="async"
+            >
+          </figure>
+          <div class="product-detail__media-note">
+            <span aria-hidden="true">✓</span>
+            <p>Visual produk mengikuti data yang tersedia. Warna hasil cetak dapat memiliki toleransi produksi.</p>
+          </div>
+        </div>
 
-  $prodName = $product->name ?? 'Lanyard Custom Printing Full Color';
-  if ($prodName === 'Lanyard Tissue Premium') {
-      $prodName = 'Lanyard Custom Printing Full Color';
-  }
-  
-  $prodPrice = $product->basePrice ?? 'Rp12.900';
-  if (str_contains($prodPrice, 'Mulai')) {
-      $prodPrice = 'Rp12.900';
-  }
+        <article class="product-detail__summary">
+          <div class="product-detail__summary-meta">
+            <span>{{ $categoryName }}</span>
+            @if($sku)<span>SKU {{ $sku }}</span>@endif
+          </div>
 
-  // Deskripsi logic - full vs 100 kata
-  $dummyLongDesc = 'Lanyard custom premium berkualitas tinggi yang diproduksi menggunakan bahan polyester serat padat pilihan terbaik untuk menjamin kenyamanan maksimal saat dipakai sepanjang hari. Diproses menggunakan teknologi digital printing sublimasi generasi terbaru menghasilkan detail desain gambar super tajam, warna-warni yang cerah luar biasa, dan daya tahan warna yang sangat kokoh anti luntur meskipun dicuci berulang kali. Paket produk ini dilengkapi dengan aksesoris stopper plastik premium yang elastis nan kuat serta kait besi gantungan berlapis krom anti karat berstandar industri. Sangat ideal digunakan sebagai sarana tanda pengenal resmi karyawan kantor, kepanitiaan event seminar, gantungan kunci ID card mahasiswa, dan alat promosi branding perusahaan Anda secara profesional.';
-  
-  if (($product->slug ?? '') === 'lanyard-polyester') {
-      $rawFull = $dummyLongDesc;
-  } else {
-      $rawFull = $product->description ?? $product->shortDescription ?? $dummyLongDesc;
-  }
-  
-  $fullDesc = trim(strip_tags($rawFull));
-  $words = $fullDesc === '' ? [] : preg_split('/\s+/', $fullDesc);
-  $wordCount = count($words);
-  $isLong = $wordCount > 35;
-  if ($isLong) {
-      $shortDesc = implode(' ', array_slice($words, 0, 35));
-  } else {
-      $shortDesc = $fullDesc;
-  }
+          <h1 id="product-detail-title">{{ $productName }}</h1>
+          <p class="product-detail__summary-copy">{{ $shortDescription }}</p>
 
-  $waNumber = \App\Models\Setting::where('key', 'wa_number')->value('value') ?? '6282210200700';
-  $waMessage = urlencode('Halo Pusat Tali Lanyard, saya ingin bertanya tentang produk ' . $prodName . '. Apakah bisa dibantu?');
-  $waLink = "https://wa.me/{$waNumber}?text={$waMessage}";
+          <div class="product-detail__price">
+            <span>Harga mulai</span>
+            <strong>{{ $price }}</strong>
+            <small>Harga akhir menyesuaikan jumlah dan spesifikasi</small>
+          </div>
 
-  // Related Products - 4 items
-  $relatedProducts = collect();
-  try {
-      $curId = $product->id ?? null;
-      $curSlug = $product->slug ?? null;
-      $relatedProducts = \App\Models\Product::where('published', true)
-          ->when($curId, fn($q) => $q->where('id', '!=', $curId))
-          ->when($curSlug, fn($q) => $q->where('slug', '!=', $curSlug))
-          ->orderBy('sortOrder')
-          ->take(4)
-          ->get();
-  } catch (\Throwable $e) {
-      $relatedProducts = collect();
-  }
+          <dl class="product-detail__quick-info">
+            @if($minimumOrder)
+              <div>
+                <dt>Minimum pesanan</dt>
+                <dd>{{ $minimumOrder }}</dd>
+              </div>
+            @endif
+            <div>
+              <dt>Jenis pesanan</dt>
+              <dd>Custom sesuai kebutuhan</dd>
+            </div>
+            <div>
+              <dt>Konfirmasi desain</dt>
+              <dd>Mockup sebelum produksi</dd>
+            </div>
+          </dl>
 
-  if ($relatedProducts->isEmpty()) {
-      $relatedProducts = collect([
-          (object) ['name'=>'Lanyard Tissue Custom','slug'=>'lanyard-tissue','featuredImage'=>'/uploads/hero-lanyard-slider-01.webp'],
-          (object) ['name'=>'Lanyard Polyester Premium','slug'=>'lanyard-polyester','featuredImage'=>'/uploads/hero-lanyard-slider-02.webp'],
-          (object) ['name'=>'Lanyard Nylon High Quality','slug'=>'lanyard-nylon','featuredImage'=>'/uploads/aset-produk.webp'],
-          (object) ['name'=>'ID Card Holder Minimalis','slug'=>'id-card-holder','featuredImage'=>'/uploads/hero-lanyard-slider-01.webp'],
-      ]);
-  }
-@endphp
+          <ul class="product-detail__selling-points">
+            <li><span aria-hidden="true">✓</span> Konsultasi bahan dan ukuran</li>
+            <li><span aria-hidden="true">✓</span> Bantuan desain dan mockup</li>
+            <li><span aria-hidden="true">✓</span> Quality control sebelum kirim</li>
+          </ul>
 
-<div class="bg-white min-h-screen">
-  {{-- Main Product Detail --}}
-  <main class="mx-auto max-w-[1280px] px-6 lg:px-10 py-16 sm:py-24">
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-12 lg:gap-16 items-start">
-      
-      {{-- Kolom Kiri: Gambar Utama Produk Besar --}}
-      <div class="w-full bg-white rounded-2xl overflow-hidden border border-slate-100 shadow-sm aspect-square relative flex items-center justify-center">
-        @if($featImg)
-          <img src="{{ $featImg }}" alt="{{ $prodName }} - E-commerce Pusat Tali Lanyard" class="w-full h-full object-cover" loading="eager" width="600" height="600" />
-        @else
-          <div class="w-full h-full flex items-center justify-center bg-slate-50 text-slate-300">
-            <span class="material-symbols-outlined text-6xl">inventory_2</span>
+          <div class="product-detail__summary-actions">
+            <a class="product-detail__button product-detail__button--primary" href="{{ $waLink }}" target="_blank" rel="noopener">
+              Pesan via WhatsApp
+            </a>
+            <a class="product-detail__button product-detail__button--secondary" href="{{ route('ordering') }}">
+              Cara Pemesanan <span aria-hidden="true">→</span>
+            </a>
+          </div>
+
+          <p class="product-detail__response-note">Tim kami akan membantu mengecek spesifikasi dan estimasi pesanan Anda.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="product-detail__trust" aria-labelledby="product-trust-title">
+    <div class="product-detail__shell">
+      <h2 class="sr-only" id="product-trust-title">Kepastian layanan Lanyard Bekasi</h2>
+      <ul>
+        @foreach($trustItems as $item)
+          <li>
+            <span class="product-detail__trust-check" aria-hidden="true">✓</span>
+            <span>
+              <strong>{{ $item['title'] }}</strong>
+              <small>{{ $item['description'] }}</small>
+            </span>
+          </li>
+        @endforeach
+      </ul>
+    </div>
+  </section>
+
+  <section class="product-detail__dossier" aria-labelledby="product-dossier-title">
+    <div class="product-detail__shell product-detail__dossier-layout">
+      <div class="product-detail__dossier-content">
+        <article id="deskripsi-produk" class="product-detail__description">
+          <span class="product-detail__eyebrow">Informasi Produk</span>
+          <h2 id="product-dossier-title">Deskripsi Produk</h2>
+          <div class="product-detail__description-copy">{!! $descriptionHtml !!}</div>
+        </article>
+
+        @if($specifications || $accessories)
+          <div class="product-detail__spec-groups">
+            @if($specifications)
+              <section id="spesifikasi-produk" class="product-detail__spec-group">
+                <h3>Spesifikasi</h3>
+                <ul>
+                  @foreach($specifications as $specification)
+                    <li><span aria-hidden="true">✓</span><span>{{ $specification }}</span></li>
+                  @endforeach
+                </ul>
+              </section>
+            @endif
+
+            @if($accessories)
+              <section id="aksesori-produk" class="product-detail__spec-group">
+                <h3>Aksesori</h3>
+                <ul>
+                  @foreach($accessories as $accessory)
+                    <li><span aria-hidden="true">✓</span><span>{{ $accessory }}</span></li>
+                  @endforeach
+                </ul>
+              </section>
+            @endif
           </div>
         @endif
       </div>
 
-      {{-- Kolom Kanan: Informasi Produk Rapi & Berurutan --}}
-      <div class="flex flex-col justify-center py-2">
-        {{-- 1. Kategori Produk Kecil --}}
-        <span class="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-3">
-          Lanyard Custom
-        </span>
-
-        {{-- 2. Judul Produk Besar --}}
-        <h1 class="text-3xl sm:text-4xl font-bold tracking-tight text-slate-900 leading-tight mb-4">
-          {{ $prodName }}
-        </h1>
-
-        {{-- 3. Rating Bintang & Jumlah Ulasan --}}
-        <div class="flex items-center gap-2 mb-6 text-sm text-slate-500">
-          <div class="flex color-star">
-            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-          </div>
-          <span class="font-medium text-slate-800">5.0</span>
-          <span class="text-slate-300">|</span>
-          <span>12 ulasan</span>
-        </div>
-
-        {{-- 4. Harga Produk --}}
-        <div class="text-3xl font-bold text-slate-900 mb-6">
-          {{ $prodPrice }}
-        </div>
-
-        {{-- 5. Deskripsi Singkat dengan Toggle Baca Selengkapnya --}}
-        <div class="max-w-lg mb-8">
-          <div id="desc-wrapper" class="text-slate-600 text-[15px] sm:text-base leading-relaxed">
-            @if($isLong)
-              <span id="desc-short">{{ $shortDesc }}...</span>
-              <span id="desc-full" class="hidden">{{ $fullDesc }}</span>
-            @else
-              <span>{{ $fullDesc }}</span>
-            @endif
-          </div>
-
-          @if($isLong)
-            <button type="button" id="btn-toggle-desc" aria-expanded="false" onclick="toggleDescription()" class="toggle-desc-btn inline-flex items-center gap-1 mt-3 text-slate-800 hover:text-slate-900 transition-colors duration-150 group">
-              <span id="btn-toggle-text">Baca Selengkapnya</span>
-              <span id="btn-toggle-icon" class="material-symbols-outlined text-[18px] transition-transform duration-200">expand_more</span>
-            </button>
-          @endif
-        </div>
-
-        {{-- 6. Tombol Utama WhatsApp --}}
-        <div>
-          <a href="{{ $waLink }}" target="_blank" rel="noopener" class="inline-flex items-center justify-center gap-2 btn-whatsapp font-bold text-base py-3 px-8 rounded-xl shadow-sm w-full sm:w-auto text-center">
-            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.513 2.266 2.268 3.507 5.28 3.505 8.484-.004 6.657-5.34 11.997-11.953 11.997-2.005-.001-3.973-.502-5.724-1.455L0 24zm6.244-3.56c1.607.952 3.197 1.489 4.85 1.49h.005c5.385 0 9.764-4.374 9.767-9.758.002-2.607-1.013-5.059-2.859-6.908C16.22 3.413 13.758 2.4 11.146 2.4c-5.397 0-9.786 4.385-9.79 9.771-.001 1.702.461 3.326 1.34 4.81l-.997 3.637 3.725-.978zm11.392-7.533c-.305-.153-1.805-.89-2.084-.992-.28-.103-.483-.153-.686.153-.203.305-.785.992-.962 1.196-.177.203-.355.228-.66.076-.305-.153-1.287-.475-2.451-1.514-.906-.809-1.517-1.809-1.695-2.114-.177-.305-.019-.47.133-.621.137-.136.305-.355.457-.533.153-.177.203-.305.305-.508.102-.203.051-.381-.025-.533-.076-.153-.686-1.653-.94-2.261-.248-.599-.501-.518-.686-.527-.178-.008-.381-.01-.584-.01-.203 0-.534.076-.813.381-.28.305-1.068 1.042-1.068 2.541 0 1.5 1.093 2.946 1.245 3.149.153.203 2.15 3.284 5.21 4.604.727.314 1.293.502 1.734.643.73.232 1.393.199 1.918.121.585-.087 1.805-.738 2.06-1.45.253-.713.253-1.323.177-1.45-.076-.127-.28-.203-.585-.355z"/>
-            </svg>
-            <span class="text-white">Chat via WhatsApp</span>
-          </a>
-        </div>
-      </div>
-      
+      <aside class="product-detail__buy-card" aria-label="Konsultasi produk">
+        <span>Butuh produk ini?</span>
+        <strong>{{ $price }}</strong>
+        <p>Kirim jumlah pesanan dan kebutuhan Anda untuk mendapatkan quotation.</p>
+        <a href="{{ $waLink }}" target="_blank" rel="noopener">Konsultasi Sekarang</a>
+        <ul>
+          <li>✓ Respons langsung dari tim</li>
+          <li>✓ Tidak ada pembayaran di halaman ini</li>
+          <li>✓ Spesifikasi dikonfirmasi dahulu</li>
+        </ul>
+      </aside>
     </div>
-  </main>
+  </section>
 
-  {{-- Section Produk Terkait --}}
-  <section id="related-products" class="bg-slate-50 border-t border-slate-100 py-16 sm:py-20">
-    <div class="mx-auto max-w-[1280px] px-6 lg:px-10">
-      <div class="flex items-end justify-between gap-4 mb-10">
-        <h2 class="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">
-          Produk Terkait
-        </h2>
-        <a href="/produk" class="hidden md:inline-flex items-center gap-1.5 text-sm font-semibold text-slate-700 hover:text-slate-900 transition-colors">
-          <span>Lihat semua</span>
-          <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
-        </a>
+  <section id="alur-pemesanan" class="product-detail__process" aria-labelledby="product-process-title">
+    <div class="product-detail__shell">
+      <div class="product-detail__section-heading">
+        <span class="product-detail__eyebrow">Proses Pemesanan</span>
+        <h2 id="product-process-title">Pesan Custom dalam 4 Tahap</h2>
+        <p>Alur ringkas dari konsultasi sampai produk dikirim.</p>
       </div>
 
-      <div id="related-splide" class="splide" aria-label="Produk terkait bisa di-swipe">
-        <div class="splide__track">
-          <ul class="splide__list related-list">
-            @foreach($relatedProducts as $rp)
-              @php
-                $rpImg = $imgHelper($rp->featuredImage ?? null) ?? '/uploads/hero-lanyard-slider-01.webp';
-                $rpName = $rp->name ?? 'Lanyard Custom';
-                $rpPrice = $rp->basePrice ?? 'Rp12.900';
-                if (str_contains($rpPrice, 'Mulai')) {
-                    $rpPrice = 'Rp12.900';
-                }
-              @endphp
-              <li class="splide__slide related-slide">
-                <a href="/produk/{{ $rp->slug }}" class="product-card group" draggable="false">
-                  <div class="product-card-imgwrap">
-                    <img src="{{ $rpImg }}" alt="{{ $rpName }}" class="product-card-img" width="400" height="500" loading="lazy" decoding="async" draggable="false" />
-                  </div>
-                  <div class="p-4 bg-white flex flex-col gap-1 border-t border-slate-100">
-                    <h3 class="product-card-title font-semibold text-[15px] text-slate-800 leading-snug line-clamp-2 transition-colors">
-                      {{ $rpName }}
-                    </h3>
-                    <div class="font-bold text-slate-900 mt-1">
-                      {{ $rpPrice }}
-                    </div>
-                  </div>
-                </a>
-              </li>
-            @endforeach
-          </ul>
+      <ol>
+        @foreach($orderSteps as $index => $step)
+          <li>
+            <span class="product-detail__step-number">{{ $index + 1 }}</span>
+            <h3>{{ $step['title'] }}</h3>
+            <p>{{ $step['description'] }}</p>
+          </li>
+        @endforeach
+      </ol>
+    </div>
+  </section>
+
+  @if($relatedProducts->isNotEmpty())
+    <section class="product-detail__related" aria-labelledby="related-products-title">
+      <div class="product-detail__shell">
+        <div class="product-detail__section-heading product-detail__section-heading--row">
+          <div>
+            <span class="product-detail__eyebrow">Rekomendasi</span>
+            <h2 id="related-products-title">Produk Serupa</h2>
+          </div>
+          <a href="{{ route('products.index') }}">Lihat semua produk →</a>
         </div>
-      </div>
 
-      {{-- Mobile hint swipe --}}
-      <div class="flex md:hidden items-center justify-center gap-1.5 mt-6 text-slate-400 select-none">
-        <span class="material-symbols-outlined text-[16px]">swipe</span>
-        <span class="text-[11px] font-medium tracking-wide uppercase">Geser untuk lihat lainnya</span>
+        <ul class="product-detail__related-list">
+          @foreach($relatedProducts as $relatedProduct)
+            @php
+              $relatedName = $normalizeCopy($relatedProduct->name ?: 'Lanyard Custom');
+              $relatedImage = AssetUrl::relative($relatedProduct->featuredImage, '/uploads/aset-produk.webp');
+              $relatedAlt = filled($relatedProduct->featuredImage) ? 'Foto '.$relatedName : 'Contoh hasil lanyard custom Lanyard Bekasi';
+              $relatedPrice = $normalizeCopy($relatedProduct->basePrice) ?: 'Minta quotation';
+              $relatedCategory = $normalizeCopy($relatedProduct->category?->name ?: 'Lanyard Custom');
+            @endphp
+            <li>
+              <a href="{{ route('products.show', $relatedProduct->slug) }}">
+                <figure>
+                  <img src="{{ $relatedImage }}" alt="{{ $relatedAlt }}" width="480" height="360" loading="lazy" decoding="async">
+                </figure>
+                <div>
+                  <span>{{ $relatedCategory }}</span>
+                  <h3>{{ $relatedName }}</h3>
+                  <strong>{{ $relatedPrice }}</strong>
+                  <small>Lihat produk <span aria-hidden="true">→</span></small>
+                </div>
+              </a>
+            </li>
+          @endforeach
+        </ul>
+      </div>
+    </section>
+  @endif
+
+  <section class="product-detail__cta" aria-labelledby="product-cta-title">
+    <div class="product-detail__shell">
+      <div class="product-detail__cta-panel">
+        <div>
+          <span>Butuh bantuan memilih?</span>
+          <h2 id="product-cta-title">Konsultasikan Produk Sebelum Memesan</h2>
+          <p>Tim kami membantu menentukan bahan, ukuran, aksesori, dan jumlah yang sesuai.</p>
+        </div>
+        <a href="{{ $waLink }}" target="_blank" rel="noopener">Chat WhatsApp Sekarang →</a>
       </div>
     </div>
   </section>
 </div>
 
 @include('components.footer')
-@endsection
-
-@section('scripts')
-@php
-  $splideJsFile = public_path('vendor/splide/splide.min.js');
-  $splideJsV = file_exists($splideJsFile) ? filemtime($splideJsFile) : 1;
-@endphp
-<script src="/vendor/splide/splide.min.js?v={{ $splideJsV }}"></script>
-<script>
-// Toggle Deskripsi 100 kata -> buka tutup
-function toggleDescription(){
-  var shortEl = document.getElementById('desc-short');
-  var fullEl = document.getElementById('desc-full');
-  var btn = document.getElementById('btn-toggle-desc');
-  var text = document.getElementById('btn-toggle-text');
-  var icon = document.getElementById('btn-toggle-icon');
-  if(!shortEl || !fullEl) return;
-  var isHidden = fullEl.classList.contains('hidden');
-  if(isHidden){
-    shortEl.classList.add('hidden');
-    fullEl.classList.remove('hidden');
-    if(text) text.textContent = 'Tutup';
-    if(icon) icon.style.transform = 'rotate(180deg)';
-    if(btn) btn.setAttribute('aria-expanded','true');
-  }else{
-    fullEl.classList.add('hidden');
-    shortEl.classList.remove('hidden');
-    if(text) text.textContent = 'Baca Selengkapnya';
-    if(icon) icon.style.transform = 'rotate(0deg)';
-    if(btn) btn.setAttribute('aria-expanded','false');
-  }
-}
-
-// Related Splide: mobile slide, desktop destroy jadi grid 4
-(function(){
-  var root = document.getElementById('related-splide');
-  if(!root) return;
-  function waitSplide(cb){
-    if(typeof Splide !== 'undefined'){ cb(); return; }
-    var t=0;
-    (function tick(){
-      if(typeof Splide !== 'undefined'){ cb(); return; }
-      if(t++>80) return; requestAnimationFrame(tick);
-    })();
-  }
-  waitSplide(function(){
-    var splide = new Splide(root, {
-      type: 'slide',
-      autoWidth: true,
-      gap: '16px',
-      perMove: 1,
-      focus: 0,
-      trimSpace: false,
-      drag: 'free',
-      snap: true,
-      flickPower: 600,
-      dragMinThreshold: { mouse: 5, touch: 8 },
-      arrows: false,
-      pagination: false,
-      keyboard: true,
-      mediaQuery: 'min',
-      breakpoints: {
-        768: { destroy: true }
-      }
-    });
-    splide.mount();
-    // re-init on resize crossing breakpoint because destroy:true is one-way for some versions
-    var mql = window.matchMedia('(min-width: 768px)');
-    function handleMQ(e){
-      if(e.matches){
-        // desktop - if splide not destroyed, destroy
-        try{ if(splide && splide.state && !splide.state.is(splide.state.IDLE)){} }catch(_){}
-        // Splide will auto destroy via breakpoint, but ensure refresh
-        if(document.querySelector('#related-splide.splide')){}
-      }else{
-        // mobile - if not mounted, remount
-        if(!root.classList.contains('is-active')){
-          try{ splide.mount(); }catch(_){}
-        }
-      }
-    }
-    // some splide versions handle destroy automatically; this listener helps re-mount
-    if(mql.addEventListener){ mql.addEventListener('change', handleMQ); } else { mql.addListener(handleMQ); }
-  });
-})();
-</script>
 @endsection

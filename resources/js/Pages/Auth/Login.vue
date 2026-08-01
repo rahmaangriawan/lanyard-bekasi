@@ -33,7 +33,7 @@ const submit = () => {
                 Masuk ke Kawruh CMS
             </h1>
             <p class="mt-3 text-sm leading-6 text-muted-foreground">
-                Gunakan akun admin untuk mengelola website Pusat Tali Lanyard.
+                Gunakan akun admin untuk mengelola website Lanyard Bekasi.
             </p>
         </div>
 

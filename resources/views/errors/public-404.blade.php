@@ -1,6 +1,6 @@
 @extends('layouts.public')
 
-@section('title', 'Halaman Tidak Ditemukan | Pusat Tali Lanyard')
+@section('title', 'Halaman Tidak Ditemukan | Lanyard Bekasi')
 @section('meta_description', 'Halaman yang Anda cari tidak tersedia. Kunjungi beranda atau lihat pilihan produk lanyard custom kami.')
 @section('seo_noindex', '1')
 @section('seo_no_canonical', '1')

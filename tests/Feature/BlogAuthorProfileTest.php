@@ -37,7 +37,7 @@ class BlogAuthorProfileTest extends TestCase
             ->assertSee('/blog/penulis/admin', false)
             ->assertSee('/storage/uploads/profil-admin.webp', false)
             ->assertDontSee('Rama Angriawan')
-            ->assertDontSee('Tim Pusat Tali Lanyard');
+            ->assertDontSee('Tim Lanyard Bekasi');
 
         $this->get('/blog/penulis/admin')
             ->assertOk()

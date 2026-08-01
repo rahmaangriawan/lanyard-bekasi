@@ -6,7 +6,7 @@
   $collectionSchema = [
     '@context' => 'https://schema.org',
     '@type' => 'CollectionPage',
-    'name' => 'Blog & Wawasan Pusat Tali Lanyard',
+    'name' => 'Blog & Wawasan Lanyard Bekasi',
     'description' => 'Artikel seputar produksi lanyard, desain, branding, material, dan kebutuhan event untuk membantu pelanggan memilih produk yang tepat.',
     'url' => $siteUrl . '/blog',
     'inLanguage' => 'id-ID',

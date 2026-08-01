@@ -5,8 +5,8 @@
       <span class="home-about__accent home-about__accent--solid" aria-hidden="true"></span>
       <div class="home-about__image-frame">
         <img
-          src="/uploads/tentang-pusat-tali-lanyard.webp"
-          alt="Beragam tali lanyard custom hasil produksi Pusat Tali Lanyard"
+          src="/uploads/tentang-lanyard-bekasi.webp"
+          alt="Beragam tali lanyard custom hasil produksi Lanyard Bekasi"
           width="1000"
           height="1080"
           style="aspect-ratio: 1/1.08; width: 100%; height: 100%; object-fit: cover;"
@@ -18,7 +18,7 @@
 
     <div class="home-about__content" data-sr="fade" data-sr-delay="100">
       <p class="home-about__eyebrow">Tentang Kami</p>
-      <h2 id="home-about-title">Pusat Tali Lanyard yang Mengutamakan Pelanggan</h2>
+      <h2 id="home-about-title">Lanyard Bekasi yang Mengutamakan Pelanggan</h2>
 
       <div class="home-about__copy">
         <p>
@@ -33,8 +33,8 @@
 
       <div class="home-about__trust" aria-label="Dipercaya 1259 lebih lembaga dan event organizer">
         <img
-          src="/uploads/testimoni-pusat-tali-lanyard.webp"
-          alt="Kolase pelanggan Pusat Tali Lanyard"
+          src="/uploads/testimoni-lanyard-bekasi.webp"
+          alt="Kolase pelanggan Lanyard Bekasi"
           width="762"
           height="246"
           style="aspect-ratio: 762/246; width: 156px; height: auto;"

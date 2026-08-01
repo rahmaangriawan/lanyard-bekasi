@@ -1,38 +1,44 @@
 @php
   $benefits = [
     [
-      'icon' => 'schedule',
-      'title' => 'Tepat Waktu',
-      'description' => 'Jadwal produksi mengikuti kesepakatan dan kebutuhan deadline Anda.',
-    ],
-    [
-      'icon' => 'palette',
-      'title' => 'Akurasi Warna 99%',
-      'description' => 'Teknologi cetak modern menghasilkan warna yang tajam, jernih, dan detail.',
+      'icon' => 'sell',
+      'title' => 'Harga Transparan',
+      'description' => 'Estimasi harga jelas dan dapat disesuaikan dengan jumlah pesanan.',
     ],
     [
       'icon' => 'design_services',
       'title' => 'Desain Custom',
-      'description' => 'Tim kami membantu mewujudkan desain yang sesuai dengan identitas Anda.',
+      'description' => 'Tim kami membantu menyiapkan desain sesuai identitas dan kebutuhan Anda.',
     ],
     [
-      'icon' => 'shopping_cart',
-      'title' => 'Pemesanan Mudah',
-      'description' => 'Konsultasi dan pemesanan praktis dengan bantuan admin yang responsif.',
+      'icon' => 'palette',
+      'title' => 'Kualitas Cetak',
+      'description' => 'Hasil cetak tajam dengan material yang nyaman untuk digunakan.',
+    ],
+    [
+      'icon' => 'local_shipping',
+      'title' => 'Pengiriman Luas',
+      'description' => 'Pesanan dikemas rapi dan dapat dikirim ke berbagai wilayah Indonesia.',
+    ],
+    [
+      'icon' => 'verified_user',
+      'title' => 'Garansi Kualitas',
+      'description' => 'Setiap hasil produksi diperiksa sebelum dikemas dan dikirim.',
+      'id' => 'garansi',
     ],
   ];
 @endphp
 
-<section class="home-benefits" aria-labelledby="home-benefits-title">
-  <div class="home-benefits__container">
-    <header class="home-benefits__header">
-      <h2 id="home-benefits-title">Kenapa Memilih Pusat Tali Lanyard?</h2>
-      <p>Produksi berkualitas, proses yang jelas, dan layanan yang memudahkan kebutuhan lanyard Anda.</p>
+<section class="home-benefits" id="layanan" aria-labelledby="home-benefits-title">
+  <div class="home-shell">
+    <header class="home-section-heading">
+      <p>Kenapa Memilih Kami</p>
+      <h2 id="home-benefits-title">Kualitas Terbaik, Harga Bersahabat</h2>
     </header>
 
     <div class="home-benefits__grid">
       @foreach ($benefits as $benefit)
-        <article class="benefit-item">
+        <article class="benefit-item" @if(!empty($benefit['id'])) id="{{ $benefit['id'] }}" @endif>
           <span class="benefit-item__icon" aria-hidden="true">
             <span class="material-symbols-outlined">{{ $benefit['icon'] }}</span>
           </span>

@@ -37,9 +37,11 @@
     @stack('seo')
 
     {{-- Brand favicon --}}
-    <link rel="icon" type="image/webp" href="/uploads/pusat-tali-lanyard-favicon.webp">
-    <link rel="shortcut icon" type="image/webp" href="/uploads/pusat-tali-lanyard-favicon.webp">
-    <link rel="apple-touch-icon" href="/uploads/pusat-tali-lanyard-favicon.webp">
+    <link rel="icon" href="/favicon.ico" sizes="any">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png">
+    <link rel="icon" type="image/webp" sizes="1024x1024" href="/uploads/lanyard-bekasi-favicon.webp">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
 
     {{-- Web App Manifest --}}
     <link rel="manifest" href="/site.webmanifest">
@@ -49,7 +51,10 @@
     <link rel="preload" href="/font-assets/geist-700" as="font" type="font/woff2" crossorigin>
 
     @if(request()->is('/'))
-    <link rel="preload" href="/uploads/hero-pusat-tali-lanyard-office.webp" as="image" fetchpriority="high">
+    <link rel="preload" href="/uploads/hero-lanyard-bekasi-custom-01.webp" as="image" type="image/webp" fetchpriority="high">
+    @endif
+    @if(request()->routeIs('ordering'))
+    <link rel="preload" href="/uploads/hero-cara-pemesanan-lanyard-bekasi.webp" as="image" type="image/webp" fetchpriority="high">
     @endif
 
     {{-- Bundled CSS: Tailwind + colors + global + header + hero + fonts (minified) --}}
@@ -85,101 +90,50 @@
       .lazy-section { content-visibility: auto; contain-intrinsic-size: auto 500px; }
       #hero { content-visibility: visible; }
 
-      /* Disable ALL layout transitions in header to prevent CLS */
-      .site-header,
-      .site-header *,
-      .site-header *::before,
-      .site-header *::after {
-        transition: none !important;
-        transition-duration: 0s !important;
-        animation-duration: 0s !important;
-      }
-
-      /* Force strict structural layouts for Header to prevent any CLS */
-      .site-header {
-        height: 76px !important;
-        min-height: 76px !important;
-      }
+      /* Reserve the final header geometry before the public bundle is parsed. */
+      .site-header { height: 72px !important; min-height: 72px !important; }
       .site-header__logo {
         display: inline-flex !important;
         align-items: center !important;
         justify-content: center !important;
-        width: 118px !important;
-        height: 44px !important;
-        min-width: 118px !important;
-        flex: 0 0 118px !important;
+        width: 154px !important;
+        height: 42px !important;
+        min-width: 154px !important;
       }
       .site-header__logo img {
-        aspect-ratio: 118/44 !important;
-        width: 118px !important;
-        height: 44px !important;
+        aspect-ratio: 500 / 122 !important;
+        width: 138px !important;
+        height: auto !important;
         object-fit: contain !important;
       }
       .site-header__links {
-        display: flex !important; /* Force show in desktop immediately to prevent CLS */
+        display: flex !important;
         align-items: center !important;
-        justify-content: center !important;
-        gap: 4px !important;
-        min-width: 320px !important; /* Reserve enough space to absorb font-swap width differences */
-        flex: 1 1 auto !important;
+        justify-content: flex-end !important;
       }
       .site-header__hamburger {
-        display: none !important; /* Hide by default in desktop to prevent app.min.css default flex layout shift */
+        display: none !important;
         width: 44px !important;
         height: 44px !important;
-        flex: 0 0 44px !important;
-      }
-      .site-header__actions {
-        display: flex !important; /* Force show in desktop immediately to prevent CLS */
-        width: 146px !important;
-        height: 44px !important;
-        flex: 0 0 146px !important;
-        min-width: 146px !important;
-      }
-      .site-header__btn {
-        width: 146px !important;
-        height: 44px !important;
-        min-height: 44px !important;
-        padding: 0 !important;
       }
 
-      /* Mobile Overrides (< 1023px) */
-      @media (max-width: 1023px) {
-        .site-header {
-          height: 72px !important;
-          min-height: 72px !important;
-        }
+      @media (max-width: 767px) {
+        .site-header { height: 68px !important; min-height: 68px !important; }
         .site-header__logo {
-          width: 118px !important;
-          height: 44px !important;
-          min-width: 118px !important;
-          flex: 0 0 118px !important;
+          width: 140px !important;
+          height: 40px !important;
+          min-width: 140px !important;
         }
-        .site-header__logo img {
-          width: 118px !important;
-          height: 44px !important;
-        }
-        .site-header__links {
-          display: none !important; /* Hide links in mobile view */
-        }
-        .site-header__hamburger {
-          display: flex !important; /* Show hamburger only in mobile view */
-        }
-        .site-header__actions {
-          display: none !important;
-        }
+        .site-header__logo img { width: 126px !important; }
+        .site-header__links { display: none !important; }
+        .site-header__hamburger { display: flex !important; }
       }
 
-      #client-logos-section { min-height: 198px; }
-      .logo-marquee { min-height: 32px; }
       /* Prevent Material Symbols text fallback layout shift */
       .material-symbols-outlined {
         display: inline-flex !important;
         align-items: center !important;
         justify-content: center;
-        width: 24px;
-        height: 24px;
-        overflow: hidden;
         font-size: 24px !important;
         line-height: 1;
         letter-spacing: normal;
@@ -190,9 +144,6 @@
         -webkit-font-smoothing: antialiased;
         vertical-align: middle;
       }
-      /* Custom size overrides for specific icons to prevent scaling shift */
-      .ptl-hero__cta .material-symbols-outlined { width: 19px; height: 19px; font-size: 19px !important; }
-      .ptl-hero__trust .material-symbols-outlined { width: 20px; height: 20px; font-size: 20px !important; }
     </style>
 
     @stack('schema')

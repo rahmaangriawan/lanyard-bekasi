@@ -157,6 +157,9 @@ Route::get('/page-sitemap.xml', function () use ($sitemapBaseUrl, $sitemapRespon
     $urls = collect([
         ['loc' => $base.'/', 'changefreq' => 'weekly', 'priority' => '1.0'],
         ['loc' => $base.'/produk', 'changefreq' => 'weekly', 'priority' => '0.9'],
+        ['loc' => $base.'/layanan', 'changefreq' => 'monthly', 'priority' => '0.8'],
+        ['loc' => $base.'/garansi', 'changefreq' => 'monthly', 'priority' => '0.7'],
+        ['loc' => $base.'/faq', 'changefreq' => 'monthly', 'priority' => '0.7'],
         ['loc' => $base.'/area', 'changefreq' => 'monthly', 'priority' => '0.8'],
         ['loc' => $base.'/cara-pemesanan', 'changefreq' => 'monthly', 'priority' => '0.7'],
         ['loc' => $base.'/daftar-harga', 'changefreq' => 'weekly', 'priority' => '0.8'],
@@ -248,6 +251,9 @@ Route::get('/storage/{path}', fn (string $path) => $serveStorageAsset($path))->w
 
 // Public pages
 Route::view('/produk', 'pages.produk.index')->name('products.index');
+Route::view('/layanan', 'pages.layanan')->name('services');
+Route::view('/garansi', 'pages.garansi')->name('warranty');
+Route::view('/faq', 'pages.faq')->name('faq');
 Route::get('/produk/{slug}', function (string $slug) {
     $product = Product::query()
         ->with('category')
@@ -255,7 +261,35 @@ Route::get('/produk/{slug}', function (string $slug) {
         ->where('slug', $slug)
         ->firstOrFail();
 
-    return view('pages.produk.show', compact('product'));
+    $relatedProducts = collect();
+
+    if ($product->categoryId) {
+        $relatedProducts = Product::query()
+            ->with('category')
+            ->where('published', true)
+            ->where('id', '!=', $product->id)
+            ->where('categoryId', $product->categoryId)
+            ->orderBy('sortOrder')
+            ->orderByDesc('createdAt')
+            ->take(4)
+            ->get();
+    }
+
+    if ($relatedProducts->count() < 4) {
+        $relatedProducts = $relatedProducts->concat(
+            Product::query()
+                ->with('category')
+                ->where('published', true)
+                ->where('id', '!=', $product->id)
+                ->whereNotIn('id', $relatedProducts->pluck('id'))
+                ->orderBy('sortOrder')
+                ->orderByDesc('createdAt')
+                ->take(4 - $relatedProducts->count())
+                ->get()
+        );
+    }
+
+    return view('pages.produk.show', compact('product', 'relatedProducts'));
 })->name('products.show');
 
 Route::get('/area', function () {
@@ -282,7 +316,28 @@ Route::view('/pengiriman', 'pages.pengiriman')->name('shipping');
 Route::view('/kebijakan', 'pages.kebijakan')->name('privacy');
 Route::view('/syarat-ketentuan', 'pages.syarat-ketentuan')->name('terms');
 
-Route::view('/blog', 'pages.blog.index')->name('blog.index');
+Route::get('/blog', function (Request $request) {
+    $search = mb_substr(trim((string) $request->query('q', '')), 0, 255);
+    $escapedSearch = str_replace(['!', '%', '_'], ['!!', '!%', '!_'], $search);
+
+    $posts = Post::query()
+        ->with(['category', 'author'])
+        ->where('published', true)
+        ->when($search !== '', function ($query) use ($escapedSearch) {
+            $term = "%{$escapedSearch}%";
+
+            $query->where(function ($query) use ($term) {
+                $query->whereRaw("title LIKE ? ESCAPE '!'", [$term])
+                    ->orWhereRaw("metaDescription LIKE ? ESCAPE '!'", [$term])
+                    ->orWhereRaw("content LIKE ? ESCAPE '!'", [$term]);
+            });
+        })
+        ->orderByDesc('createdAt')
+        ->paginate(9)
+        ->withQueryString();
+
+    return view('pages.blog.index', compact('posts', 'search'));
+})->name('blog.index');
 Route::get('/kategori/{slug}', function (string $slug) {
     $category = Category::query()
         ->where('type', 'BLOG')
@@ -386,7 +441,13 @@ Route::get('/blog/{slug}', function (string $slug) {
         ->with('category')
         ->where('published', true)
         ->whereKeyNot($post->id)
-        ->when($post->categoryId, fn ($query) => $query->where('categoryId', $post->categoryId))
+        ->where(function ($query) use ($post) {
+            if ($post->categoryId !== null) {
+                $query->where('categoryId', $post->categoryId);
+            } else {
+                $query->whereNull('categoryId');
+            }
+        })
         ->orderByDesc('createdAt')
         ->limit(3)
         ->get();

@@ -1,8 +1,9 @@
 @php($faqs = config('seo.faq', []))
 
 <section class="home-faq" id="faq" aria-labelledby="home-faq-title">
-  <div class="home-faq__container">
-    <header class="home-faq__header">
+  <div class="home-shell">
+    <header class="home-section-heading">
+      <p>Pertanyaan Umum</p>
       <h2 id="home-faq-title">Pertanyaan Paling Sering Diajukan</h2>
     </header>
 
@@ -19,5 +20,6 @@
         </details>
       @endforeach
     </div>
+
   </div>
 </section>

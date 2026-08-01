@@ -1,13 +1,13 @@
 @php
   $headerLinks = [
-    ['label' => 'Beranda', 'href' => route('home'), 'patterns' => ['/']],
-    ['label' => 'Produk', 'href' => route('products.index'), 'patterns' => ['produk', 'produk/*']],
-    ['label' => 'Area', 'href' => route('area'), 'patterns' => ['area', 'area/*']],
-    ['label' => 'Pemesanan', 'href' => route('ordering'), 'patterns' => ['cara-pemesanan']],
-    ['label' => 'Blog', 'href' => route('blog.index'), 'patterns' => ['blog', 'blog/*', 'kategori/*', 'tag/*']],
+    ['label' => 'Layanan', 'href' => route('services'), 'patterns' => ['layanan']],
+    ['label' => 'Pengiriman', 'href' => route('shipping'), 'patterns' => ['pengiriman']],
+    ['label' => 'Garansi', 'href' => route('warranty'), 'patterns' => ['garansi']],
+    ['label' => 'FAQ', 'href' => route('faq'), 'patterns' => ['faq']],
+    ['label' => 'Artikel', 'href' => route('blog.index'), 'patterns' => ['blog*', 'kategori/*', 'tag/*']],
   ];
 
-  $quotationUrl = 'https://wa.me/6282210200700?text=Halo%20Pusat%20Tali%20Lanyard%2C%20saya%20mau%20minta%20quotation%20lanyard%20custom.';
+  $quotationUrl = 'https://wa.me/6282210200700?text='.rawurlencode('Halo Lanyard Bekasi, saya mau konsultasi lanyard custom.');
 @endphp
 
 <div class="site-header__sentinel" id="site-header-sentinel" aria-hidden="true"></div>
@@ -15,13 +15,12 @@
 <header class="site-header" id="site-header">
   <div class="site-header__surface">
     <nav class="site-header__nav" aria-label="Navigasi utama">
-      <a href="{{ route('home') }}" class="site-header__logo" style="width: 118px; height: 44px; flex: 0 0 118px; min-width: 118px; display: inline-flex;" aria-label="Pusat Tali Lanyard, kembali ke beranda">
+      <a href="{{ route('home') }}" class="site-header__logo" aria-label="Lanyard Bekasi, kembali ke beranda">
         <img
-          src="/uploads/pusat-tali-lanyard-logo.webp"
-          alt="Pusat Tali Lanyard"
-          width="118"
-          height="44"
-          style="width: 118px; height: 44px; aspect-ratio: 118/44; object-fit: contain;"
+          src="/uploads/lanyard-bekasi-logo.webp"
+          alt="Lanyard Bekasi"
+          width="500"
+          height="122"
           loading="eager"
           fetchpriority="high"
           decoding="async"
@@ -30,7 +29,7 @@
 
       <div class="site-header__links">
         @foreach ($headerLinks as $item)
-          @php($isActive = request()->is(...$item['patterns']))
+          @php($isActive = !empty($item['patterns']) && request()->is(...$item['patterns']))
           <a
             href="{{ $item['href'] }}"
             class="site-header__link"
@@ -39,15 +38,15 @@
         @endforeach
       </div>
 
-      <div class="site-header__actions" style="width: 146px; height: 44px; flex: 0 0 146px; min-width: 146px; display: flex;">
-        <a
-          href="{{ $quotationUrl }}"
-          target="_blank"
-          rel="noopener noreferrer"
-          class="site-header__btn site-header__btn--primary"
-          style="width: 146px; height: 44px; min-height: 44px; padding: 0; display: inline-flex;"
-        >Minta Quotation</a>
-      </div>
+      <a
+        href="{{ $quotationUrl }}"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="site-header__btn site-header__btn--primary site-header__desktop-cta"
+      >
+        <img src="/images/whatsapp.svg" alt="" width="18" height="18" loading="eager" decoding="async" aria-hidden="true">
+        <span>Pesan Sekarang</span>
+      </a>
 
       <button
         type="button"
@@ -70,7 +69,7 @@
     <div class="site-header__mobile-inner">
       <nav class="site-header__mobile-links" aria-label="Navigasi seluler">
         @foreach ($headerLinks as $item)
-          @php($isActive = request()->is(...$item['patterns']))
+          @php($isActive = !empty($item['patterns']) && request()->is(...$item['patterns']))
           <a
             href="{{ $item['href'] }}"
             class="site-header__link site-header__link--mobile"
@@ -89,7 +88,10 @@
           target="_blank"
           rel="noopener noreferrer"
           class="site-header__btn site-header__btn--primary site-header__btn--full"
-        >Minta Quotation</a>
+        >
+          <img src="/images/whatsapp.svg" alt="" width="18" height="18" loading="lazy" decoding="async" aria-hidden="true">
+          <span>Pesan via WhatsApp</span>
+        </a>
       </div>
     </div>
   </div>

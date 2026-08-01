@@ -7,7 +7,7 @@
     fn () => Product::with('category')
       ->where('published', true)
       ->orderBy('sortOrder')
-      ->take(8)
+      ->take(4)
       ->get()
   );
 
@@ -17,10 +17,6 @@
       (object) ['name' => 'Lanyard Polyester Standar', 'slug' => 'lanyard-polyester', 'shortDescription' => 'Pilihan ekonomis dan tahan lama untuk kebutuhan event.', 'featuredImage' => '/uploads/hero-lanyard-slider-02.webp', 'basePrice' => 'Mulai Rp 3.500'],
       (object) ['name' => 'Lanyard Nylon Premium', 'slug' => 'lanyard-nylon', 'shortDescription' => 'Material kuat dengan tampilan rapi untuk pemakaian rutin.', 'featuredImage' => '/uploads/aset-produk.webp', 'basePrice' => 'Mulai Rp 7.500'],
       (object) ['name' => 'ID Card Holder', 'slug' => 'id-card-holder', 'shortDescription' => 'Pelindung kartu identitas untuk kantor dan kegiatan.', 'featuredImage' => '/uploads/hero-lanyard-slider-01.webp', 'basePrice' => 'Mulai Rp 15.000'],
-      (object) ['name' => 'Hook Premium', 'slug' => 'hook-premium', 'shortDescription' => 'Pilihan kait kuat untuk melengkapi lanyard custom.', 'featuredImage' => '/uploads/hero-lanyard-slider-02.webp', 'basePrice' => null],
-      (object) ['name' => 'Aksesoris Lanyard', 'slug' => 'aksesoris', 'shortDescription' => 'Stopper, hook, dan aksesori sesuai kebutuhan penggunaan.', 'featuredImage' => '/uploads/aset-produk.webp', 'basePrice' => null],
-      (object) ['name' => 'Lanyard Double Kait', 'slug' => 'double-kait', 'shortDescription' => 'Dua kait untuk kartu atau perlengkapan yang lebih stabil.', 'featuredImage' => '/uploads/hero-lanyard-slider-01.webp', 'basePrice' => 'Mulai Rp 8.500'],
-      (object) ['name' => 'Lanyard Custom Print', 'slug' => 'custom-print', 'shortDescription' => 'Cetak desain khusus dengan warna sesuai identitas brand.', 'featuredImage' => '/uploads/hero-lanyard-slider-02.webp', 'basePrice' => 'Mulai Rp 4.500'],
     ]);
   }
 
@@ -29,19 +25,13 @@
 @endphp
 
 <section class="home-products" id="products" aria-labelledby="home-products-title">
-  <div class="home-products__container">
-    <header class="home-products__header">
-      <div>
-        <h2 id="home-products-title">Pilihan Produk Unggulan</h2>
-        <p>Temukan pilihan lanyard dan aksesori untuk kebutuhan kantor, event, sekolah, maupun komunitas.</p>
-      </div>
-      <a class="home-products__all" href="/produk">
-        <span>Lihat semua produk</span>
-        <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>
-      </a>
+  <div class="home-shell">
+    <header class="home-section-heading">
+      <p>Katalog Produk</p>
+      <h2 id="home-products-title">Pilihan Lanyard Custom Favorit</h2>
     </header>
 
-    <ul class="home-products__grid" aria-label="Produk unggulan Pusat Tali Lanyard">
+    <ul class="home-products__grid" aria-label="Produk unggulan Lanyard Bekasi">
       @foreach ($products as $product)
         @php
           $image = $asset($product->featuredImage ?? null);
@@ -54,7 +44,7 @@
                 src="{{ $image }}"
                 @if ($srcset = \App\Support\ResponsiveImage::srcset($image))
                   srcset="{{ $srcset }}"
-                  sizes="(min-width: 1024px) 292px, 46vw"
+                  sizes="(min-width: 1024px) 280px, (min-width: 640px) 46vw, 92vw"
                 @endif
                 alt="{{ $product->name }}"
                 width="400"
@@ -74,12 +64,17 @@
                 @else
                   <span>Lihat detail</span>
                 @endif
-                <span class="material-symbols-outlined home-products__arrow" aria-hidden="true">arrow_forward</span>
+                <span>Detail <span class="material-symbols-outlined home-products__arrow" aria-hidden="true">arrow_forward</span></span>
               </div>
             </div>
           </a>
         </li>
       @endforeach
     </ul>
+
+    <a class="home-products__all" href="{{ route('products.index') }}">
+      <span>Lihat Semua Produk</span>
+      <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>
+    </a>
   </div>
 </section>

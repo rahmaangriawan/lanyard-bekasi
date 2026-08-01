@@ -16,7 +16,7 @@ class BlogSeoMetadataTest extends TestCase
     {
         parent::setUp();
         config([
-            'app.url' => 'https://pusattalilanyard.com',
+            'app.url' => 'https://lanyardbekasi.com',
             'cache.public_store' => 'array',
         ]);
     }
@@ -40,9 +40,9 @@ class BlogSeoMetadataTest extends TestCase
 
         $this->assertIsArray($article);
         $this->assertSame($post->title, $article['headline']);
-        $this->assertSame('https://pusattalilanyard.com/blog/'.$post->slug, $article['mainEntityOfPage']['@id']);
+        $this->assertSame('https://lanyardbekasi.com/blog/'.$post->slug, $article['mainEntityOfPage']['@id']);
         $this->assertSame('Rama SEO', $article['author']['name']);
-        $this->assertSame('https://pusattalilanyard.com/blog/penulis/rama-seo', $article['author']['url']);
+        $this->assertSame('https://lanyardbekasi.com/blog/penulis/rama-seo', $article['author']['url']);
         $this->assertSame('Tips Lanyard', $article['articleSection']);
         $this->assertNotEmpty($article['datePublished']);
         $this->assertNotEmpty($article['dateModified']);

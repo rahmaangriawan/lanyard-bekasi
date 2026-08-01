@@ -1137,7 +1137,7 @@ class CmsResourceController extends Controller
                 'label' => 'Umum',
                 'description' => 'Identitas utama website dan teks dasar brand.',
                 'fields' => [
-                    ['key' => 'site_title', 'label' => 'Site Title', 'type' => 'text', 'placeholder' => 'Pusat Tali Lanyard'],
+                    ['key' => 'site_title', 'label' => 'Site Title', 'type' => 'text', 'placeholder' => 'Lanyard Bekasi'],
                     ['key' => 'site_description', 'label' => 'Site Description', 'type' => 'textarea', 'placeholder' => 'Cetak lanyard custom untuk kebutuhan brand dan event.'],
                     ['key' => 'footer_text', 'label' => 'Footer Text', 'type' => 'textarea'],
                 ],
@@ -1146,11 +1146,11 @@ class CmsResourceController extends Controller
                 'label' => 'Brand Media',
                 'description' => 'Logo, favicon, dan gambar preview untuk kebutuhan brand/SEO.',
                 'fields' => [
-                    ['key' => 'site_logo', 'label' => 'Logo Utama', 'type' => 'image', 'fallback' => '/uploads/pusat-tali-lanyard-logo.webp'],
-                    ['key' => 'site_logo_header', 'label' => 'Logo Header', 'type' => 'image', 'fallback' => '/uploads/pusat-tali-lanyard-logo.webp'],
-                    ['key' => 'site_logo_mobile', 'label' => 'Logo Mobile', 'type' => 'image', 'fallback' => '/uploads/pusat-tali-lanyard-logo.webp'],
-                    ['key' => 'site_favicon', 'label' => 'Favicon', 'type' => 'image', 'fallback' => '/uploads/pusat-tali-lanyard-favicon.webp'],
-                    ['key' => 'og_image', 'label' => 'Open Graph Image', 'type' => 'image', 'fallback' => '/uploads/pusat-tali-lanyard-logo.webp'],
+                    ['key' => 'site_logo', 'label' => 'Logo Utama', 'type' => 'image', 'fallback' => '/uploads/lanyard-bekasi-logo.webp'],
+                    ['key' => 'site_logo_header', 'label' => 'Logo Header', 'type' => 'image', 'fallback' => '/uploads/lanyard-bekasi-logo.webp'],
+                    ['key' => 'site_logo_mobile', 'label' => 'Logo Mobile', 'type' => 'image', 'fallback' => '/uploads/lanyard-bekasi-logo.webp'],
+                    ['key' => 'site_favicon', 'label' => 'Favicon', 'type' => 'image', 'fallback' => '/uploads/lanyard-bekasi-favicon.webp'],
+                    ['key' => 'og_image', 'label' => 'Open Graph Image', 'type' => 'image', 'fallback' => '/uploads/lanyard-bekasi-logo.webp'],
                 ],
             ],
             'kontak' => [
@@ -1159,7 +1159,7 @@ class CmsResourceController extends Controller
                 'fields' => [
                     ['key' => 'contact_phone', 'label' => 'Telepon', 'type' => 'text', 'placeholder' => '+62 822-1020-0700'],
                     ['key' => 'contact_whatsapp', 'label' => 'WhatsApp', 'type' => 'text', 'placeholder' => '6282210200700'],
-                    ['key' => 'contact_email', 'label' => 'Email', 'type' => 'email', 'placeholder' => 'info@pusattalilanyard.com'],
+                    ['key' => 'contact_email', 'label' => 'Email', 'type' => 'email', 'placeholder' => 'info@lanyardbekasi.com'],
                     ['key' => 'contact_address', 'label' => 'Alamat', 'type' => 'textarea', 'placeholder' => 'Depok, Indonesia'],
                 ],
             ],
